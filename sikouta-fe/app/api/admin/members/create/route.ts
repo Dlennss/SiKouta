@@ -1,0 +1,90 @@
+import { NextResponse } from "next/server";
+import { requireApiBase } from "@/lib/adminApi";
+import { getBackendAuthorization } from "@/lib/server-auth";
+
+type RegisterReq = {
+  email: string;
+  nama: string;
+  phone?: string;
+  password: string;
+  pin?: string;
+  role?: string;
+  retail_agent_commission_rp?: number;
+  retail_master_commission_rp?: number;
+  h2h_agent_commission_rp?: number;
+  h2h_master_commission_rp?: number;
+  fee_dana?: number;
+  fee_gopay?: number;
+  fee_linkaja?: number;
+  fee_ovo?: number;
+  fee_shopee?: number;
+  fee_bank?: number;
+  fee_lainnya?: number;
+};
+
+export async function POST(req: Request) {
+  const base = requireApiBase();
+  const auth = await getBackendAuthorization(req);
+  if (!auth) {
+    return NextResponse.json(
+      { ok: false, error: "Sesi login berakhir. Silakan masuk kembali." },
+      { status: 401 }
+    );
+  }
+
+  const bodyText = await req.text();
+
+  let payload: RegisterReq;
+  try {
+    payload = JSON.parse(bodyText) as RegisterReq;
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+      return NextResponse.json({ ok: false, error: "invalid json" }, { status: 400 });
+    }
+  } catch {
+    return NextResponse.json({ ok: false, error: "invalid json" }, { status: 400 });
+  }
+
+  // Keep the registration payload shared with the backend's existing account flow.
+  const beBody = JSON.stringify({
+    email: payload.email,
+    nama: payload.nama,
+    phone: payload.phone,
+    password: payload.password,
+    pin: payload.pin,
+    role: payload.role || "member",
+    retail_agent_commission_rp: payload.retail_agent_commission_rp,
+    retail_master_commission_rp: payload.retail_master_commission_rp,
+    h2h_agent_commission_rp: payload.h2h_agent_commission_rp,
+    h2h_master_commission_rp: payload.h2h_master_commission_rp,
+    fee_dana: payload.fee_dana,
+    fee_gopay: payload.fee_gopay,
+    fee_linkaja: payload.fee_linkaja,
+    fee_ovo: payload.fee_ovo,
+    fee_shopee: payload.fee_shopee,
+    fee_bank: payload.fee_bank,
+    fee_lainnya: payload.fee_lainnya,
+  });
+
+  const r = await fetch(`${base}/v1/admin/users/create`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: auth,
+    },
+    body: beBody,
+    cache: "no-store",
+  }).catch(() => null);
+
+  if (!r) {
+    return NextResponse.json(
+      { ok: false, error: "Layanan pengguna belum dapat dihubungi. Silakan coba lagi." },
+      { status: 502 }
+    );
+  }
+
+  const text = await r.text();
+  return new NextResponse(text, {
+    status: r.status,
+    headers: { "Content-Type": "application/json" },
+  });
+}

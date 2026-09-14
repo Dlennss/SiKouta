@@ -21,10 +21,10 @@ export function GuestBottomNav({ isLoggedIn = false }: GuestBottomNavProps) {
   return (
     <BottomNav
       items={[
-        { label: "Beranda", href: "/", imageSrc: "/sikouta-assets/nav_beranda.png", active: homeActive },
-        { label: "Riwayat", href: "/transaksi", imageSrc: "/sikouta-assets/nav_riwayat.png", active: historyActive },
-        { label: "Promo", href: promoHref, imageSrc: "/sikouta-assets/promo_koin_rp.png", active: promoActive },
-        { label: "Akun", href: accountHref, imageSrc: "/sikouta-assets/nav_akun.png", active: accountActive },
+        { label: "Beranda", href: "/", imageSrc: "/sikouta-assets/07_bottom_nav/beranda_active.png", active: homeActive },
+        { label: "Riwayat", href: "/transaksi", imageSrc: "/sikouta-assets/07_bottom_nav/riwayat.png", active: historyActive },
+        { label: "Promo", href: promoHref, imageSrc: "/sikouta-assets/07_bottom_nav/promo.png", active: promoActive },
+        { label: "Akun", href: accountHref, imageSrc: "/sikouta-assets/07_bottom_nav/akun.png", active: accountActive },
       ]}
     />
   );

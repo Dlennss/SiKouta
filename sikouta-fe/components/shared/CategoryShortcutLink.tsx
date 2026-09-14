@@ -24,21 +24,21 @@ function getCategoryVisual(name: string): CategoryVisual {
     case "pulsa":
     case "pulsa data":
     case "pulsa & data":
-      return { iconSrc: "/sikouta-assets/layanan_pulsa_3d.png" };
+      return { iconSrc: "/sikouta-assets/06_service_icons/pulsa_icon.png" };
     case "e-money":
     case "e-wallet":
-      return { iconSrc: "/sikouta-assets/layanan_e_wallet_3d.png" };
+      return { iconSrc: "/sikouta-assets/06_service_icons/e_wallet_icon.png" };
     case "paket data":
-      return { iconSrc: "/sikouta-assets/layanan_paket_data_3d.png" };
+      return { iconSrc: "/sikouta-assets/06_service_icons/paket_data_icon.png" };
     case "listrik":
     case "pln":
     case "listrik pln":
-      return { iconSrc: "/sikouta-assets/layanan_listrik_pln.png" };
+      return { iconSrc: "/sikouta-assets/06_service_icons/listrik_pln_icon.png" };
     case "game":
       return { iconSrc: "/sikouta-assets/icons-hd/voucher-game.png" };
     case "tv":
     case "tv kabel":
-      return { iconSrc: "/sikouta-assets/icons-hd/tv-kabel.png" };
+      return { iconSrc: "/sikouta-assets/06_service_icons/tv_kabel_icon.png" };
     case "pdam":
       return { iconSrc: "/sikouta-assets/icons-hd/pdam.png" };
     case "bpjs":
@@ -51,9 +51,9 @@ function getCategoryVisual(name: string): CategoryVisual {
       return { iconSrc: "/sikouta-assets/icons-home-hd/telepon.png" };
     case "paket telepon":
     case "telepon":
-      return { iconSrc: "/sikouta-assets/layanan_telepon_3d.png" };
+      return { iconSrc: "/sikouta-assets/06_service_icons/telepon_icon.png" };
     case "sms":
-      return { iconSrc: "/sikouta-assets/layanan_sms_3d.png" };
+      return { iconSrc: "/sikouta-assets/06_service_icons/sms_icon.png" };
     case "voucher":
       return { iconSrc: "/sikouta-assets/icons-hd/voucher-digital.png" };
     case "aktivasi perdana":
@@ -105,9 +105,9 @@ function getCategoryVisual(name: string): CategoryVisual {
     case "zakat & donasi":
       return { iconSrc: "/sikouta-assets/icons-hd/zakat-donasi.png" };
     case "lainnya":
-      return { iconSrc: "/sikouta-assets/layanan_lainnya.png" };
+      return { iconSrc: "/sikouta-assets/06_service_icons/lainnya_icon.png" };
     default:
-      return { iconSrc: "/sikouta-assets/layanan_lainnya.png" };
+      return { iconSrc: "/sikouta-assets/06_service_icons/lainnya_icon.png" };
   }
 }
 

@@ -1,0 +1,1 @@
+Aset hasil crop dari mockup Sikouta.\nFolder utama: screen lengkap, logo/splash, login, dashboard, quick icons, service tiles, service icons, bottom nav.\nSemua aset berasal dari screenshot mockup sehingga sebagian masih berupa crop raster, bukan SVG/vector asli.\n

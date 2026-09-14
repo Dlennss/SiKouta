@@ -16,7 +16,7 @@ function UserSkeletonScreen() {
         <div className="pointer-events-none absolute -right-16 top-12 h-44 w-44 rounded-full bg-cyan-200/15" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[330px] bg-white" style={{ clipPath: "ellipse(88% 42% at 50% 100%)" }} />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[170px]">
-          <Image src="/sikouta-assets/header_tower_strip.png" alt="" fill sizes="430px" className="object-cover object-bottom opacity-95" />
+          <Image src="/sikouta-assets/01_splash/city_illustration_bottom.png" alt="" fill sizes="430px" className="object-cover object-bottom opacity-95" />
         </div>
 
         <div className="relative flex items-center justify-between text-[17px] font-black leading-none">
@@ -25,8 +25,8 @@ function UserSkeletonScreen() {
         </div>
 
         <div className="relative mt-36 flex flex-col items-center text-center">
-          <Image src="/sikouta-assets/logo_mark_512.png" alt="" width={150} height={150} priority className="h-[150px] w-[150px] object-contain drop-shadow-[0_22px_34px_rgba(1,32,111,0.32)]" />
-          <Image src="/sikouta-assets/logo_wordmark_sikouta.png" alt="Sikouta" width={288} height={88} priority className="mt-5 h-auto w-[270px] brightness-0 invert" />
+          <Image src="/sikouta-assets/01_splash/logo_symbol_large.png" alt="" width={150} height={150} priority className="h-[150px] w-[150px] object-contain drop-shadow-[0_22px_34px_rgba(1,32,111,0.32)]" />
+          <Image src="/sikouta-assets/01_splash/brand_wordmark.png" alt="Sikouta" width={288} height={88} priority className="mt-5 h-auto w-[270px]" />
           <p className="mt-5 text-[19px] font-medium leading-8">Solusi Keuangan untuk Semua<br />Lebih Mudah, Lebih Dekat</p>
           <div className="mt-20 flex items-center gap-3" aria-hidden="true">
             <span className="h-2 w-12 rounded-full bg-white" />

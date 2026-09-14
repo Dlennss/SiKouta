@@ -43,7 +43,7 @@ function UserHeader({ name }: { name: string }) {
   return (
     <header className="mt-7">
       <div className="flex items-center justify-between gap-3">
-        <Image src="/sikouta-assets/logo_full_sikouta.png" alt="Sikouta" width={178} height={58} priority className="h-auto w-[176px] object-contain" />
+        <Image src="/sikouta-assets/03_dashboard/logo_header.png" alt="Sikouta" width={178} height={58} priority className="h-auto w-[176px] object-contain" />
         <div className="flex items-center gap-4">
           <button type="button" className="relative grid h-11 w-11 place-items-center rounded-full text-[#06184f]" aria-label="Notifikasi">
             <Bell className="h-7 w-7" strokeWidth={2} />
@@ -116,7 +116,7 @@ function UserQuickActions() {
 function SikoutaPromoCard() {
   return (
     <Link href="/user/kategori" prefetch={false} className="mt-7 grid min-h-[112px] grid-cols-[96px_minmax(0,1fr)_auto] items-center gap-3 rounded-[17px] bg-[#e9f4ff] px-5 py-4 shadow-[0_10px_24px_rgba(7,84,150,0.06)]">
-      <Image src="/sikouta-assets/kartu_info_cepat.png" alt="" width={82} height={82} className="h-[82px] w-[82px] object-contain" />
+      <Image src="/sikouta-assets/03_dashboard/promo_card.png" alt="" width={82} height={82} className="h-[82px] w-[82px] object-cover object-left" />
       <span className="min-w-0">
         <span className="block text-[17px] font-black leading-6 text-[#06184f]">Transaksi makin mudah bersama Sikouta</span>
         <span className="mt-1 block text-[14px] font-medium leading-5 text-[#41598c]">Bayar tagihan, beli pulsa, dan banyak lagi dalam satu aplikasi.</span>

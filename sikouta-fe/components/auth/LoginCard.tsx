@@ -173,8 +173,8 @@ export function LoginCard() {
         </div>
 
         <div className="relative mx-auto mt-20 flex max-w-[330px] flex-col items-center text-center">
-          <Image src="/sikouta-assets/logo_mark_512.png" alt="" width={118} height={118} priority className="h-[118px] w-[118px] object-contain" />
-          <Image src="/sikouta-assets/logo_wordmark_sikouta.png" alt="Sikouta" width={230} height={70} priority className="mt-1 h-auto w-[205px] object-contain" />
+          <Image src="/sikouta-assets/02_login/logo_symbol.png" alt="" width={118} height={118} priority className="h-[118px] w-[118px] object-contain" />
+          <Image src="/sikouta-assets/02_login/brand_wordmark.png" alt="Sikouta" width={230} height={70} priority className="mt-1 h-auto w-[205px] object-contain" />
           <h1 className="mt-3 text-[22px] font-black leading-7 tracking-normal">Masuk ke akun Anda</h1>
           <p className="mt-2 max-w-[280px] text-[17px] font-medium leading-6 text-[#2d4a84]">
             Nikmati kemudahan bertransaksi bersama Sikouta

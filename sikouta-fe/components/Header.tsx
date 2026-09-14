@@ -27,7 +27,7 @@ export default function Header() {
           <span className="min-w-0">
             <span className="relative block h-10 w-[174px]">
               <Image
-                src="/sikouta-assets/logo_full_sikouta.png"
+                src="/sikouta-assets/03_dashboard/logo_header.png"
                 alt="SiKouta"
                 fill
                 priority

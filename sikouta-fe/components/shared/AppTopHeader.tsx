@@ -35,7 +35,7 @@ export function AppTopHeader({ isLoggedIn = false, userName, saldo, role }: AppT
           >
             <span className="relative block h-10 w-[170px] min-w-0">
               <Image
-                src="/sikouta-assets/logo_full_sikouta.png"
+                src="/sikouta-assets/03_dashboard/logo_header.png"
                 alt="SiKouta"
                 fill
                 priority

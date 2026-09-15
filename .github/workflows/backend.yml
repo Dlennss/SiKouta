@@ -5,8 +5,8 @@ on:
     branches:
       - main
     paths:
-      - ".github/workflows/backend.yml"
       - "sikouta-be/**"
+      - ".github/workflows/backend.yml"
   workflow_dispatch:
 
 concurrency:
@@ -24,7 +24,9 @@ jobs:
       SSH_PORT: ${{ secrets.SSH_PORT || secrets.SERVER_PORT || '22' }}
       BACKEND_SOURCE_DIR: ${{ secrets.BACKEND_SOURCE_DIR || '/var/lib/syslog-ng/sikouta/SiKouta/sikouta-be' }}
       BACKEND_RELEASE_DIR: ${{ secrets.BACKEND_RELEASE_DIR || '/var/lib/syslog-ng/sikouta/releases/sikouta-be/current' }}
+      FRONTEND_RELEASE_DIR: ${{ secrets.FRONTEND_RELEASE_DIR || '/var/lib/syslog-ng/sikouta/releases/sikouta-fe/current' }}
       BACKEND_SERVICE_NAME: ${{ secrets.BACKEND_SERVICE_NAME || 'sikouta-be.service' }}
+      FRONTEND_SERVICE_NAME: ${{ secrets.FRONTEND_SERVICE_NAME || 'sikouta-fe.service' }}
 
     steps:
       - name: Checkout repository
@@ -42,6 +44,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          sudo mkdir -p /tmp/disabled-apt-sources
+          for source_file in $(sudo grep -rl "dl.google.com/linux/chrome" /etc/apt/sources.list.d 2>/dev/null || true); do
+            sudo mv "$source_file" "/tmp/disabled-apt-sources/$(basename "$source_file").disabled"
+          done
+          sudo sed -i '/dl.google.com\/linux\/chrome/s/^[[:space:]]*deb /# deb /' /etc/apt/sources.list 2>/dev/null || true
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
           sudo apt-get -o Acquire::Retries=3 update
           sudo apt-get install -y sshpass rsync
 
@@ -57,46 +66,17 @@ jobs:
         run: |
           set -euo pipefail
           export SSHPASS="$SERVER_PASSWORD"
-          sshpass -e ssh -o ConnectTimeout=15 -o NumberOfPasswordPrompts=1 -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "true"
-
-      - name: Prepare server backend runtime
-        shell: bash
-        run: |
-          set -euo pipefail
-          export SSHPASS="$SERVER_PASSWORD"
-          printf '%s\n' "$SERVER_PASSWORD" | sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "sudo -S -p '' bash -s" <<REMOTE
-          set -euo pipefail
-          export DEBIAN_FRONTEND=noninteractive
-          apt-get update
-          apt-get install -y build-essential ca-certificates curl libc6-dev pkg-config rsync
-          if ! command -v go >/dev/null 2>&1; then
-            GO_VERSION=1.24.2
-            ARCH=\$(dpkg --print-architecture)
-            case "\$ARCH" in
-              amd64) GO_ARCH=amd64 ;;
-              arm64) GO_ARCH=arm64 ;;
-              *) echo "Unsupported architecture: \$ARCH" >&2; exit 1 ;;
-            esac
-            curl -fsSL "https://go.dev/dl/go\${GO_VERSION}.linux-\${GO_ARCH}.tar.gz" -o /tmp/go.tgz
-            rm -rf /usr/local/go
-            tar -C /usr/local -xzf /tmp/go.tgz
-            ln -sfn /usr/local/go/bin/go /usr/local/bin/go
-            ln -sfn /usr/local/go/bin/gofmt /usr/local/bin/gofmt
+          if ! sshpass -e ssh -o ConnectTimeout=15 -o NumberOfPasswordPrompts=1 -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "true"; then
+            echo "::error::SSH login failed. Check SERVER_HOST, SERVER_USER, SERVER_PASSWORD, and SSH_PORT / SERVER_PORT secrets."
+            exit 1
           fi
-          install -d /var/lib/syslog-ng/sikouta
-          install -d "$BACKEND_SOURCE_DIR"
-          install -d "\$(dirname "$BACKEND_RELEASE_DIR")"
-          install -d /var/lib/syslog-ng/sikouta/logs
-          install -d /var/lib/syslog-ng/sikouta/shared-bin
-          chown -R "$SERVER_USER" /var/lib/syslog-ng/sikouta
-          go version
-          REMOTE
 
       - name: Sync backend source
         shell: bash
         run: |
           set -euo pipefail
           export SSHPASS="$SERVER_PASSWORD"
+          sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "mkdir -p '$BACKEND_SOURCE_DIR'"
           sshpass -e rsync -az --delete \
             -e "ssh -p $SSH_PORT" \
             --exclude '.env' \
@@ -117,52 +97,12 @@ jobs:
         run: |
           set -euo pipefail
           export SSHPASS="$SERVER_PASSWORD"
-          if [[ -n "$BACKEND_ENV" ]]; then
-            printf '%s\n' "$BACKEND_ENV" | sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
-              "cat > '$BACKEND_SOURCE_DIR/.env' && chmod 600 '$BACKEND_SOURCE_DIR/.env'"
-          fi
-          sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
-            "BACKEND_SOURCE_DIR='$BACKEND_SOURCE_DIR' BACKEND_RELEASE_DIR='$BACKEND_RELEASE_DIR' bash -s" <<'REMOTE'
-          set -euo pipefail
-          if [ -f "$BACKEND_SOURCE_DIR/.env" ] && grep -q '^DATABASE_URL=.' "$BACKEND_SOURCE_DIR/.env"; then
-            chmod 600 "$BACKEND_SOURCE_DIR/.env"
+          if [[ -z "$BACKEND_ENV" ]]; then
+            echo "BACKEND_ENV is empty; keeping the existing server environment."
             exit 0
           fi
-
-          for candidate in \
-            "$BACKEND_RELEASE_DIR/.env" \
-            "/var/lib/syslog-ng/sikouta/sikouta-be/.env" \
-            "/var/lib/syslog-ng/sikouta/SiKouta/sikouta-be/.env" \
-            "/var/lib/syslog-ng/ruangsinyal/releases/ruangsinyal-be/current/.env" \
-            "/var/lib/syslog-ng/ruangsinyal/ruangsinyal-be/.env"
-          do
-            if [ -f "$candidate" ] && grep -q '^DATABASE_URL=.' "$candidate"; then
-              cp "$candidate" "$BACKEND_SOURCE_DIR/.env"
-              chmod 600 "$BACKEND_SOURCE_DIR/.env"
-              echo "Reused backend .env from existing server path."
-              exit 0
-            fi
-          done
-
-          echo "Backend .env tidak ditemukan di server. Isi GitHub secret BACKEND_ENV atau buat file $BACKEND_SOURCE_DIR/.env yang berisi DATABASE_URL=..." >&2
-          exit 1
-          REMOTE
-
-      - name: Configure backend database host alias
-        shell: bash
-        run: |
-          set -euo pipefail
-          export SSHPASS="$SERVER_PASSWORD"
-          if sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
-            "grep -Eq '^DATABASE_URL=.*@db(:|/)' '$BACKEND_SOURCE_DIR/.env'"; then
-            printf '%s\n' "$SERVER_PASSWORD" | sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "sudo -S -p '' bash -s" <<'REMOTE'
-          set -euo pipefail
-          if ! grep -Eq '^[[:space:]]*127\.0\.0\.1[[:space:]]+.*\bdb\b' /etc/hosts; then
-            printf '\n127.0.0.1 db\n' >> /etc/hosts
-          fi
-          getent hosts db
-          REMOTE
-          fi
+          printf '%s\n' "$BACKEND_ENV" | sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
+            "cat > '$BACKEND_SOURCE_DIR/.env' && chmod 600 '$BACKEND_SOURCE_DIR/.env'"
 
       - name: Build and publish backend release
         shell: bash
@@ -170,60 +110,34 @@ jobs:
           set -euo pipefail
           export SSHPASS="$SERVER_PASSWORD"
           sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
-            "cd '$BACKEND_SOURCE_DIR' && PATH='/usr/local/go/bin:/usr/local/bin:$PATH' SOURCE_DIR='$BACKEND_SOURCE_DIR' RELEASE_ROOT=\"\$(dirname '$BACKEND_RELEASE_DIR')\" SHARED_LOG_DIR='/var/lib/syslog-ng/sikouta/logs' SKIP_SERVICE_RESTART=true bash scripts/deploy-prod-release.sh"
+            "cd '$BACKEND_SOURCE_DIR' && PATH='/usr/local/go/bin:/usr/local/bin:$PATH' SOURCE_DIR='$BACKEND_SOURCE_DIR' RELEASE_ROOT=\"\$(dirname '$BACKEND_RELEASE_DIR')\" SHARED_LOG_DIR=\"\$(dirname \"\$(dirname '$BACKEND_RELEASE_DIR')\")/logs\" SKIP_SERVICE_RESTART=true bash scripts/deploy-prod-release.sh"
 
-      - name: Restart SiKouta backend and Nginx
+      - name: Restart sikouta services and Nginx
         shell: bash
         run: |
           set -euo pipefail
           export SSHPASS="$SERVER_PASSWORD"
-          printf '%s\n' "$SERVER_PASSWORD" | sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "sudo -S -p '' bash -s" <<REMOTE
-          set -euo pipefail
-          if [ ! -f /etc/systemd/system/$BACKEND_SERVICE_NAME ]; then
-            cat > /etc/systemd/system/$BACKEND_SERVICE_NAME <<UNIT
-          [Unit]
-          Description=SiKouta Backend
-          After=network-online.target
-          Wants=network-online.target
-
-          [Service]
-          Type=simple
-          User=$SERVER_USER
-          WorkingDirectory=$BACKEND_RELEASE_DIR
-          EnvironmentFile=-$BACKEND_RELEASE_DIR/.env
-          Environment=PORT=8091
-          ExecStart=$BACKEND_RELEASE_DIR/sikouta-be
-          Restart=always
-          RestartSec=5
-
-          [Install]
-          WantedBy=multi-user.target
-          UNIT
-          fi
-          install -d /etc/systemd/system/$BACKEND_SERVICE_NAME.d
-          cat > /etc/systemd/system/$BACKEND_SERVICE_NAME.d/release.conf <<UNIT
-          [Service]
-          WorkingDirectory=$BACKEND_RELEASE_DIR
-          ExecStart=
-          ExecStart=$BACKEND_RELEASE_DIR/sikouta-be
-          UNIT
-          systemctl daemon-reload
-          systemctl enable $BACKEND_SERVICE_NAME
-          nginx -t
-          if ! systemctl restart $BACKEND_SERVICE_NAME nginx || ! systemctl is-active --quiet $BACKEND_SERVICE_NAME nginx; then
-            journalctl -u $BACKEND_SERVICE_NAME -n 120 --no-pager || true
-            systemctl --no-pager --full status $BACKEND_SERVICE_NAME nginx || true
-            exit 1
-          fi
-          REMOTE
+          printf '%s\n' "$SERVER_PASSWORD" | sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
+            "sudo -S -p '' bash -c '
+              install -d /etc/systemd/system/$BACKEND_SERVICE_NAME.d /etc/systemd/system/$FRONTEND_SERVICE_NAME.d
+              printf \"%s\\n\" \"[Service]\" \"WorkingDirectory=$BACKEND_RELEASE_DIR\" \"Environment=PORT=8091\" \"ExecStart=\" \"ExecStart=$BACKEND_RELEASE_DIR/sikouta-be\" > /etc/systemd/system/$BACKEND_SERVICE_NAME.d/release.conf
+              printf \"%s\\n\" \"[Service]\" \"WorkingDirectory=$FRONTEND_RELEASE_DIR\" \"Environment=PORT=3011\" \"Environment=HOSTNAME=127.0.0.1\" \"ExecStart=\" \"ExecStart=/usr/bin/env node $FRONTEND_RELEASE_DIR/server.js\" > /etc/systemd/system/$FRONTEND_SERVICE_NAME.d/release.conf
+              systemctl daemon-reload
+              nginx -t
+              if ! systemctl restart $BACKEND_SERVICE_NAME $FRONTEND_SERVICE_NAME nginx || ! systemctl is-active --quiet $BACKEND_SERVICE_NAME $FRONTEND_SERVICE_NAME nginx; then
+                journalctl -u $FRONTEND_SERVICE_NAME -n 120 --no-pager || true
+                systemctl --no-pager --full status $BACKEND_SERVICE_NAME $FRONTEND_SERVICE_NAME nginx || true
+                exit 1
+              fi
+            '"
           sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
             "for attempt in \$(seq 1 60); do
-               if curl --fail --silent http://127.0.0.1:8091/health >/dev/null; then
-                 echo 'SiKouta backend siap.'
+               if curl --fail --silent http://127.0.0.1:8091/health >/dev/null && curl --fail --silent http://127.0.0.1:3011/api/health >/dev/null; then
+                 echo 'sikouta backend dan frontend siap.'
                  exit 0
                fi
                sleep 2
              done
-             echo 'Backend belum siap setelah 120 detik.' >&2
-             systemctl --no-pager --full status '$BACKEND_SERVICE_NAME' || true
+             echo 'Service belum siap setelah 120 detik.' >&2
+             systemctl --no-pager --full status '$BACKEND_SERVICE_NAME' '$FRONTEND_SERVICE_NAME' || true
              exit 1"

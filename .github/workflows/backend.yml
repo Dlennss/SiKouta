@@ -122,7 +122,31 @@ jobs:
               "cat > '$BACKEND_SOURCE_DIR/.env' && chmod 600 '$BACKEND_SOURCE_DIR/.env'"
           fi
           sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
-            "test -f '$BACKEND_SOURCE_DIR/.env' && grep -q '^DATABASE_URL=.' '$BACKEND_SOURCE_DIR/.env' || (echo 'BACKEND_ENV secret harus diisi dan wajib punya DATABASE_URL=...' >&2 && exit 1)"
+            "BACKEND_SOURCE_DIR='$BACKEND_SOURCE_DIR' BACKEND_RELEASE_DIR='$BACKEND_RELEASE_DIR' bash -s" <<'REMOTE'
+          set -euo pipefail
+          if [ -f "$BACKEND_SOURCE_DIR/.env" ] && grep -q '^DATABASE_URL=.' "$BACKEND_SOURCE_DIR/.env"; then
+            chmod 600 "$BACKEND_SOURCE_DIR/.env"
+            exit 0
+          fi
+
+          for candidate in \
+            "$BACKEND_RELEASE_DIR/.env" \
+            "/var/lib/syslog-ng/sikouta/sikouta-be/.env" \
+            "/var/lib/syslog-ng/sikouta/SiKouta/sikouta-be/.env" \
+            "/var/lib/syslog-ng/ruangsinyal/releases/ruangsinyal-be/current/.env" \
+            "/var/lib/syslog-ng/ruangsinyal/ruangsinyal-be/.env"
+          do
+            if [ -f "$candidate" ] && grep -q '^DATABASE_URL=.' "$candidate"; then
+              cp "$candidate" "$BACKEND_SOURCE_DIR/.env"
+              chmod 600 "$BACKEND_SOURCE_DIR/.env"
+              echo "Reused backend .env from existing server path."
+              exit 0
+            fi
+          done
+
+          echo "Backend .env tidak ditemukan di server. Isi GitHub secret BACKEND_ENV atau buat file $BACKEND_SOURCE_DIR/.env yang berisi DATABASE_URL=..." >&2
+          exit 1
+          REMOTE
 
       - name: Build and publish backend release
         shell: bash

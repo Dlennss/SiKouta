@@ -117,12 +117,12 @@ jobs:
         run: |
           set -euo pipefail
           export SSHPASS="$SERVER_PASSWORD"
-          if [[ -z "$BACKEND_ENV" ]]; then
-            echo "BACKEND_ENV is empty; keeping the existing server environment."
-            exit 0
+          if [[ -n "$BACKEND_ENV" ]]; then
+            printf '%s\n' "$BACKEND_ENV" | sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
+              "cat > '$BACKEND_SOURCE_DIR/.env' && chmod 600 '$BACKEND_SOURCE_DIR/.env'"
           fi
-          printf '%s\n' "$BACKEND_ENV" | sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
-            "cat > '$BACKEND_SOURCE_DIR/.env' && chmod 600 '$BACKEND_SOURCE_DIR/.env'"
+          sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
+            "test -f '$BACKEND_SOURCE_DIR/.env' && grep -q '^DATABASE_URL=.' '$BACKEND_SOURCE_DIR/.env' || (echo 'BACKEND_ENV secret harus diisi dan wajib punya DATABASE_URL=...' >&2 && exit 1)"
 
       - name: Build and publish backend release
         shell: bash

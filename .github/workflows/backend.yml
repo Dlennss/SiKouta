@@ -148,6 +148,22 @@ jobs:
           exit 1
           REMOTE
 
+      - name: Configure backend database host alias
+        shell: bash
+        run: |
+          set -euo pipefail
+          export SSHPASS="$SERVER_PASSWORD"
+          if sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
+            "grep -Eq '^DATABASE_URL=.*@db(:|/)' '$BACKEND_SOURCE_DIR/.env'"; then
+            printf '%s\n' "$SERVER_PASSWORD" | sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "sudo -S -p '' bash -s" <<'REMOTE'
+          set -euo pipefail
+          if ! grep -Eq '^[[:space:]]*127\.0\.0\.1[[:space:]]+.*\bdb\b' /etc/hosts; then
+            printf '\n127.0.0.1 db\n' >> /etc/hosts
+          fi
+          getent hosts db
+          REMOTE
+          fi
+
       - name: Build and publish backend release
         shell: bash
         run: |

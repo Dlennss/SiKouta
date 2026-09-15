@@ -104,6 +104,90 @@ jobs:
           printf '%s\n' "$BACKEND_ENV" | sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
             "cat > '$BACKEND_SOURCE_DIR/.env' && chmod 600 '$BACKEND_SOURCE_DIR/.env'"
 
+      - name: Ensure backend database credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          export SSHPASS="$SERVER_PASSWORD"
+          printf '%s\n' "$SERVER_PASSWORD" | sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
+            "sudo -S -p '' env BACKEND_SOURCE_DIR='$BACKEND_SOURCE_DIR' bash -s" <<'REMOTE'
+          set -euo pipefail
+          ENV_FILE="$BACKEND_SOURCE_DIR/.env"
+          if [ ! -f "$ENV_FILE" ]; then
+            echo "Backend .env tidak ditemukan, database credential tidak bisa disiapkan." >&2
+            exit 1
+          fi
+          if ! command -v python3 >/dev/null 2>&1; then
+            apt-get update
+            apt-get install -y python3
+          fi
+          DB_INFO="$(python3 - "$ENV_FILE" <<'PY'
+          import sys
+          from urllib.parse import unquote, urlparse
+
+          env_file = sys.argv[1]
+          database_url = ""
+          with open(env_file, "r", encoding="utf-8") as fh:
+              for line in fh:
+                  line = line.strip()
+                  if line.startswith("DATABASE_URL="):
+                      database_url = line.split("=", 1)[1].strip().strip('"').strip("'")
+                      break
+          if not database_url:
+              raise SystemExit("DATABASE_URL is empty")
+
+          parsed = urlparse(database_url)
+          host = parsed.hostname or ""
+          if host not in {"127.0.0.1", "localhost", "db"}:
+              raise SystemExit(0)
+
+          values = {
+              "DB_USER": unquote(parsed.username or ""),
+              "DB_PASSWORD": unquote(parsed.password or ""),
+              "DB_NAME": unquote((parsed.path or "").lstrip("/")),
+          }
+          if not all(values.values()):
+              raise SystemExit("DATABASE_URL harus berisi user, password, dan nama database")
+
+          for key, value in values.items():
+              escaped = value.replace("'", "'\"'\"'")
+              print(f"{key}='{escaped}'")
+          PY
+          )"
+          if [ -z "$DB_INFO" ]; then
+            echo "DATABASE_URL memakai database eksternal; sinkronisasi PostgreSQL lokal dilewati."
+            exit 0
+          fi
+          eval "$DB_INFO"
+          export DB_USER DB_PASSWORD DB_NAME
+          python3 - <<'PY' | sudo -u postgres psql -v ON_ERROR_STOP=1
+          import os
+
+          def sql_literal(value):
+              return "'" + value.replace("'", "''") + "'"
+
+          def sql_ident(value):
+              return '"' + value.replace('"', '""') + '"'
+
+          db_user = os.environ["DB_USER"]
+          db_password = os.environ["DB_PASSWORD"]
+          db_name = os.environ["DB_NAME"]
+
+          print("DO $$")
+          print("BEGIN")
+          print(f"  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = {sql_literal(db_user)}) THEN")
+          print(f"    EXECUTE 'CREATE ROLE ' || quote_ident({sql_literal(db_user)}) || ' LOGIN PASSWORD ' || quote_literal({sql_literal(db_password)});")
+          print("  ELSE")
+          print(f"    EXECUTE 'ALTER ROLE ' || quote_ident({sql_literal(db_user)}) || ' WITH LOGIN PASSWORD ' || quote_literal({sql_literal(db_password)});")
+          print("  END IF;")
+          print("END")
+          print("$$;")
+          print("SELECT 'CREATE DATABASE ' || quote_ident({0}) || ' OWNER ' || quote_ident({1}) WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = {0})\\gexec".format(sql_literal(db_name), sql_literal(db_user)))
+          print(f"ALTER DATABASE {sql_ident(db_name)} OWNER TO {sql_ident(db_user)};")
+          PY
+          echo "PostgreSQL credential backend sudah disinkronkan."
+          REMOTE
+
       - name: Build and publish backend release
         shell: bash
         run: |

@@ -71,6 +71,22 @@ jobs:
             exit 1
           fi
 
+      - name: Prepare server deploy directories
+        shell: bash
+        run: |
+          set -euo pipefail
+          export SSHPASS="$SERVER_PASSWORD"
+          printf '%s\n' "$SERVER_PASSWORD" | sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
+            "sudo -S -p '' bash -c '
+              set -euo pipefail
+              install -d /var/lib/syslog-ng/sikouta
+              install -d \"$BACKEND_SOURCE_DIR\"
+              install -d \"$(dirname "$BACKEND_RELEASE_DIR")\"
+              install -d \"$(dirname "$FRONTEND_RELEASE_DIR")\"
+              install -d /var/lib/syslog-ng/sikouta/logs
+              chown -R \"$SERVER_USER\" /var/lib/syslog-ng/sikouta
+            '"
+
       - name: Sync backend source
         shell: bash
         run: |

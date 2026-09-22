@@ -96,7 +96,7 @@ export function UserCategoryGrid({ items, showAll = false }: UserCategoryGridPro
   return (
     <section>
       <div>
-        <div className={showAll ? "grid grid-cols-3 gap-4" : "grid grid-cols-4 gap-x-3 gap-y-4"}>
+        <div className={showAll ? "grid grid-cols-3 gap-4" : "grid grid-cols-4 gap-x-2 gap-y-4"}>
           {!showAll
             ? DEFAULT_SHORTCUTS.map((item) => (
                 <CategoryShortcutLink

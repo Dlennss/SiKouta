@@ -24,12 +24,12 @@ function getCategoryVisual(name: string): CategoryVisual {
     case "pulsa":
     case "pulsa data":
     case "pulsa & data":
-      return { iconSrc: "/sikouta-assets/06_service_icons/pulsa_icon.png" };
+      return { iconSrc: "/sikouta-assets/icons-home-hd/pulsa.png" };
     case "e-money":
     case "e-wallet":
-      return { iconSrc: "/sikouta-assets/06_service_icons/e_wallet_icon.png" };
+      return { iconSrc: "/sikouta-assets/icons-home-hd/ewallet.png" };
     case "paket data":
-      return { iconSrc: "/sikouta-assets/06_service_icons/paket_data_icon.png" };
+      return { iconSrc: "/sikouta-assets/icons-home-hd/paket-data.png" };
     case "listrik":
     case "pln":
     case "listrik pln":
@@ -51,9 +51,9 @@ function getCategoryVisual(name: string): CategoryVisual {
       return { iconSrc: "/sikouta-assets/icons-home-hd/telepon.png" };
     case "paket telepon":
     case "telepon":
-      return { iconSrc: "/sikouta-assets/06_service_icons/telepon_icon.png" };
+      return { iconSrc: "/sikouta-assets/icons-home-hd/telepon.png" };
     case "sms":
-      return { iconSrc: "/sikouta-assets/06_service_icons/sms_icon.png" };
+      return { iconSrc: "/sikouta-assets/icons-home-hd/sms.png" };
     case "voucher":
       return { iconSrc: "/sikouta-assets/icons-hd/voucher-digital.png" };
     case "aktivasi perdana":
@@ -105,7 +105,7 @@ function getCategoryVisual(name: string): CategoryVisual {
     case "zakat & donasi":
       return { iconSrc: "/sikouta-assets/icons-hd/zakat-donasi.png" };
     case "lainnya":
-      return { iconSrc: "/sikouta-assets/06_service_icons/lainnya_icon.png" };
+      return { iconSrc: "/sikouta-assets/icons-home-hd/lainnya.png" };
     default:
       return { iconSrc: "/sikouta-assets/06_service_icons/lainnya_icon.png" };
   }
@@ -119,15 +119,15 @@ export function CategoryShortcutLink({ href, label, visualName }: CategoryShortc
       href={href}
       prefetch={false}
       aria-label={label}
-      className="group flex min-h-[92px] min-w-0 flex-col items-center justify-start gap-2 rounded-[16px] px-0.5 py-0.5 text-center transition duration-200 hover:-translate-y-0.5"
+      className="group flex min-h-[102px] min-w-0 flex-col items-center justify-start gap-2 rounded-[18px] px-0 py-0.5 text-center transition duration-200 hover:-translate-y-0.5"
     >
-      <div className="grid aspect-square w-full max-w-[66px] shrink-0 place-items-center rounded-[18px] bg-white shadow-[0_12px_24px_rgba(6,43,116,0.10)] ring-1 ring-sky-100/90 transition-transform duration-200 group-hover:scale-105">
+      <div className="grid aspect-square w-full max-w-[74px] shrink-0 place-items-center rounded-[20px] bg-white shadow-[0_14px_26px_rgba(6,43,116,0.12)] ring-1 ring-sky-100/90 transition-transform duration-200 group-hover:scale-105">
         <Image
           src={visual.iconSrc}
           alt=""
-          width={54}
-          height={54}
-          className="h-[54px] w-[54px] object-contain drop-shadow-[0_10px_12px_rgba(22,138,242,0.12)]"
+          width={68}
+          height={68}
+          className="h-[68px] w-[68px] scale-[1.12] object-contain drop-shadow-[0_10px_12px_rgba(22,138,242,0.14)]"
         />
       </div>
       <span className="block px-0.5">

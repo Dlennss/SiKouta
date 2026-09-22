@@ -119,15 +119,15 @@ export function CategoryShortcutLink({ href, label, visualName }: CategoryShortc
       href={href}
       prefetch={false}
       aria-label={label}
-      className="group flex min-h-[94px] min-w-0 flex-col items-center justify-start gap-2 rounded-[16px] px-0 py-0.5 text-center transition duration-200 hover:-translate-y-0.5"
+      className="group flex min-h-[86px] min-w-0 flex-col items-center justify-start gap-1.5 rounded-[14px] px-0 py-0.5 text-center transition duration-200 hover:-translate-y-0.5"
     >
-      <div className="grid aspect-square w-full max-w-[66px] shrink-0 place-items-center rounded-[18px] bg-white shadow-[0_12px_24px_rgba(6,43,116,0.11)] ring-1 ring-sky-100/90 transition-transform duration-200 group-hover:scale-105">
+      <div className="grid aspect-square w-full max-w-[58px] shrink-0 place-items-center overflow-hidden rounded-[16px] bg-white shadow-[0_10px_20px_rgba(6,43,116,0.10)] ring-1 ring-sky-100/90 transition-transform duration-200 group-hover:scale-105">
         <Image
           src={visual.iconSrc}
           alt=""
-          width={58}
-          height={58}
-          className="h-[58px] w-[58px] scale-105 object-contain drop-shadow-[0_9px_11px_rgba(22,138,242,0.12)]"
+          width={46}
+          height={46}
+          className="h-[46px] w-[46px] object-contain drop-shadow-[0_8px_10px_rgba(22,138,242,0.10)]"
         />
       </div>
       <span className="block px-0.5">

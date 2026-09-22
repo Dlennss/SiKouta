@@ -35,11 +35,11 @@ export function BottomNav({ items }: { items: BottomNavItem[] }) {
                   : "text-[#60738E]! visited:text-[#60738E]! hover:text-[#0876CE]!"
               }`}
             >
-              <span className="relative flex h-9 w-11 shrink-0 items-center justify-center">
+              <span className="relative flex h-8 w-10 shrink-0 items-center justify-center">
                 {imageSrc ? (
-                  <Image src={imageSrc} alt="" width={32} height={32} className="h-[32px] w-[32px] object-contain" aria-hidden="true" />
+                  <Image src={imageSrc} alt="" width={28} height={28} className="h-[28px] w-[28px] object-contain" aria-hidden="true" />
                 ) : Icon ? (
-                  <Icon aria-hidden="true" className="h-7 w-7 shrink-0" strokeWidth={active ? 2.6 : 2.2} fill={active && label === "Beranda" ? "currentColor" : "none"} />
+                  <Icon aria-hidden="true" className="h-6 w-6 shrink-0" strokeWidth={active ? 2.6 : 2.2} fill={active && label === "Beranda" ? "currentColor" : "none"} />
                 ) : null}
                 {badge}
               </span>

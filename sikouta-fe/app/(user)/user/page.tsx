@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Bell, Eye, Plus } from "lucide-react";
+import { Bell, Eye, Plus, ReceiptText, Send, Star } from "lucide-react";
 import { getAppServerSession } from "@/lib/server-auth";
 import { getUserProfile } from "@/lib/api.auth";
 import { getCategories } from "@/lib/api.products";
@@ -93,18 +93,18 @@ function UserHomeBalance({ saldo }: { saldo: number }) {
 
 function UserQuickActions() {
   const items = [
-    { href: "/user/account/topup", label: "Isi Saldo", imageSrc: "/sikouta-assets/04_quick_icons/isi_saldo.png" },
-    { href: "/user/kategori", label: "Transfer", imageSrc: "/sikouta-assets/04_quick_icons/transfer.png" },
-    { href: "/user/transaksi", label: "Riwayat", imageSrc: "/sikouta-assets/04_quick_icons/riwayat.png" },
-    { href: "/user/kategori", label: "Favorit", imageSrc: "/sikouta-assets/04_quick_icons/favorit.png" },
+    { href: "/user/account/topup", label: "Isi Saldo", icon: Plus },
+    { href: "/user/kategori", label: "Transfer", icon: Send },
+    { href: "/user/transaksi", label: "Riwayat", icon: ReceiptText },
+    { href: "/user/kategori", label: "Favorit", icon: Star },
   ];
 
   return (
     <section className="mt-5 grid grid-cols-4 gap-3">
-      {items.map(({ href, label, imageSrc }) => (
+      {items.map(({ href, label, icon: Icon }) => (
         <Link key={label} href={href} prefetch={false} className="group flex min-w-0 flex-col items-center gap-2 text-center">
-          <span className="grid h-[56px] w-[56px] place-items-center rounded-[16px] bg-[linear-gradient(135deg,#279eff_0%,#006bea_100%)] text-white shadow-[0_14px_26px_rgba(22,120,242,0.28)] transition group-hover:-translate-y-0.5">
-            <Image src={imageSrc} alt="" width={42} height={42} className="h-[42px] w-[42px] object-contain drop-shadow-[0_8px_10px_rgba(0,53,143,0.20)]" />
+          <span className="grid h-[48px] w-[48px] place-items-center rounded-[14px] bg-[linear-gradient(135deg,#279eff_0%,#006bea_100%)] text-white shadow-[0_12px_22px_rgba(22,120,242,0.24)] transition group-hover:-translate-y-0.5">
+            <Icon className="h-7 w-7" strokeWidth={3} fill={label === "Favorit" ? "currentColor" : "none"} />
           </span>
           <span className="text-[12px] font-black leading-4 text-[#06184f]">{label}</span>
         </Link>

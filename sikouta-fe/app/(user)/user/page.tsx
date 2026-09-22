@@ -138,7 +138,7 @@ export default async function UserAppHomePage() {
   return (
     <main className="min-h-svh bg-[linear-gradient(180deg,#e8f8ff_0%,#f6fbff_44%,#dff2ff_100%)] text-[#06184f] sm:py-4">
       {session?.backendToken ? <UserAuthClientSync backendToken={session.backendToken} /> : null}
-      <div className="mx-auto min-h-svh w-full max-w-[390px] overflow-hidden bg-[linear-gradient(154deg,#ffffff_0%,#f7fcff_50%,#e2f2ff_100%)] px-5 pb-[calc(116px+env(safe-area-inset-bottom))] pt-6 shadow-[0_24px_70px_rgba(7,84,150,0.14)] sm:min-h-[820px] sm:rounded-[42px] sm:ring-1 sm:ring-sky-200/70">
+      <div className="mx-auto min-h-svh w-full overflow-hidden bg-[linear-gradient(154deg,#ffffff_0%,#f7fcff_50%,#e2f2ff_100%)] px-5 pb-3 pt-6 shadow-[0_24px_70px_rgba(7,84,150,0.14)] sm:max-w-[430px] sm:min-h-[820px] sm:rounded-[42px] sm:ring-1 sm:ring-sky-200/70">
         <StatusBar />
         <UserHeader name={name} />
         <UserHomeBalance saldo={saldo} />

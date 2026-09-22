@@ -29,7 +29,7 @@ export default async function UserLayout({ children }: { children: React.ReactNo
 
   return (
     <div className="min-h-dvh overflow-x-hidden bg-[#dff7ff] text-neutral-900 md:py-4">
-      <div className="relative mx-auto min-h-dvh w-full max-w-[390px] overflow-x-hidden bg-[#EFFBFF]">
+      <div className="relative mx-auto min-h-dvh w-full overflow-x-hidden bg-[#EFFBFF] sm:max-w-[430px]">
         <AppTopHeader
           isLoggedIn={Boolean(session?.backendToken)}
           role={role}

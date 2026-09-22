@@ -17,11 +17,11 @@ type BottomNavItem = {
 export function BottomNav({ items }: { items: BottomNavItem[] }) {
   return (
     <>
-      <div aria-hidden="true" className="pointer-events-none h-[calc(96px+env(safe-area-inset-bottom))]" />
-      <div className="fixed inset-x-0 bottom-0 z-[90] mx-auto w-full max-w-[390px] bg-transparent pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] md:max-w-[390px]">
+      <div aria-hidden="true" className="pointer-events-none h-[calc(88px+env(safe-area-inset-bottom))]" />
+      <div className="fixed inset-x-0 bottom-0 z-[90] mx-auto w-full bg-transparent pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] sm:max-w-[430px]">
         <nav
           aria-label="Navigasi utama"
-          className="grid h-[86px] grid-cols-4 items-stretch rounded-t-[28px] bg-white px-5 pb-3 pt-2.5 shadow-[0_-16px_40px_rgba(31,94,146,0.16)] ring-1 ring-sky-100"
+          className="grid h-[80px] grid-cols-4 items-stretch rounded-t-[26px] bg-white px-5 pb-2.5 pt-2 shadow-[0_-16px_40px_rgba(31,94,146,0.16)] ring-1 ring-sky-100"
         >
           {items.map(({ label, href, icon: Icon, imageSrc, active, badge }) => (
             <Link

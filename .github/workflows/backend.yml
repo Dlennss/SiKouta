@@ -104,6 +104,8 @@ jobs:
           set -euo pipefail
           install -d /var/lib/syslog-ng/sikouta
           install -d "$BACKEND_SOURCE_DIR"
+          install -d "$BACKEND_SOURCE_DIR/.cache/go-build"
+          install -d "$BACKEND_SOURCE_DIR/.cache/go-mod"
           install -d "\$(dirname "$BACKEND_RELEASE_DIR")"
           install -d /var/lib/syslog-ng/sikouta/logs
           chown -R "$SERVER_USER" /var/lib/syslog-ng/sikouta
@@ -277,7 +279,7 @@ jobs:
           set -euo pipefail
           export SSHPASS="$SERVER_PASSWORD"
           sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
-            "cd '$BACKEND_SOURCE_DIR' && PATH='/usr/local/go/bin:/usr/local/bin:$PATH' SOURCE_DIR='$BACKEND_SOURCE_DIR' RELEASE_ROOT=\"\$(dirname '$BACKEND_RELEASE_DIR')\" SHARED_LOG_DIR=\"\$(dirname \"\$(dirname '$BACKEND_RELEASE_DIR')\")/logs\" SKIP_SERVICE_RESTART=true bash scripts/deploy-prod-release.sh"
+            "cd '$BACKEND_SOURCE_DIR' && mkdir -p '$BACKEND_SOURCE_DIR/.cache/go-build' '$BACKEND_SOURCE_DIR/.cache/go-mod' && PATH='/usr/local/go/bin:/usr/local/bin:$PATH' HOME='$BACKEND_SOURCE_DIR' GOCACHE='$BACKEND_SOURCE_DIR/.cache/go-build' GOMODCACHE='$BACKEND_SOURCE_DIR/.cache/go-mod' SOURCE_DIR='$BACKEND_SOURCE_DIR' RELEASE_ROOT=\"\$(dirname '$BACKEND_RELEASE_DIR')\" SHARED_LOG_DIR=\"\$(dirname \"\$(dirname '$BACKEND_RELEASE_DIR')\")/logs\" SKIP_SERVICE_RESTART=true bash scripts/deploy-prod-release.sh"
 
       - name: Restart sikouta services
         shell: bash

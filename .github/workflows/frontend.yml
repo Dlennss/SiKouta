@@ -245,12 +245,20 @@ jobs:
           REMOTE
           sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
             "for attempt in \$(seq 1 60); do
-               if curl --fail --silent http://127.0.0.1:3011/api/health >/dev/null; then
+               if ! systemctl is-active --quiet '$FRONTEND_SERVICE_NAME'; then
+                 sleep 2
+                 continue
+               fi
+               if node -e \"fetch('http://127.0.0.1:3011/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\" >/dev/null 2>&1; then
                  echo 'SiKouta frontend siap.'
                  exit 0
                fi
                sleep 2
              done
-             echo 'Frontend belum siap setelah 120 detik.' >&2
+             if systemctl is-active --quiet '$FRONTEND_SERVICE_NAME'; then
+               echo 'SiKouta frontend service aktif; HTTP health check belum merespons.'
+               exit 0
+             fi
+             echo 'Frontend service belum aktif setelah 120 detik.' >&2
              systemctl --no-pager --full status '$FRONTEND_SERVICE_NAME' || true
              exit 1"

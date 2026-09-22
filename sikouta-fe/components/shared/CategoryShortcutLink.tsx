@@ -121,13 +121,13 @@ export function CategoryShortcutLink({ href, label, visualName }: CategoryShortc
       aria-label={label}
       className="group flex min-h-[86px] min-w-0 flex-col items-center justify-start gap-1.5 rounded-[14px] px-0 py-0.5 text-center transition duration-200 hover:-translate-y-0.5"
     >
-      <div className="grid aspect-square w-full max-w-[58px] shrink-0 place-items-center overflow-hidden rounded-[16px] bg-white shadow-[0_10px_20px_rgba(6,43,116,0.10)] ring-1 ring-sky-100/90 transition-transform duration-200 group-hover:scale-105">
+      <div className="grid aspect-square w-full max-w-[60px] shrink-0 place-items-center rounded-[16px] bg-white shadow-[0_10px_20px_rgba(6,43,116,0.10)] ring-1 ring-sky-100/90 transition-transform duration-200 group-hover:scale-105">
         <Image
           src={visual.iconSrc}
           alt=""
-          width={46}
-          height={46}
-          className="h-[46px] w-[46px] object-contain drop-shadow-[0_8px_10px_rgba(22,138,242,0.10)]"
+          width={42}
+          height={42}
+          className="h-[42px] w-[42px] object-contain drop-shadow-[0_7px_9px_rgba(22,138,242,0.10)]"
         />
       </div>
       <span className="block px-0.5">

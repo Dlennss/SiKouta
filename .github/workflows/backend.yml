@@ -256,7 +256,7 @@ jobs:
           set -euo pipefail
           export DEBIAN_FRONTEND=noninteractive
           apt-get update
-          apt-get install -y build-essential ca-certificates libc6-dev pkg-config rsync
+          apt-get install -y build-essential ca-certificates libc6-dev pkg-config rsync sed mawk
           REMOTE
 
           REMOTE_ARCH="$(sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "dpkg --print-architecture")"
@@ -266,7 +266,7 @@ jobs:
             *) echo "Unsupported architecture: $REMOTE_ARCH" >&2; exit 1 ;;
           esac
 
-          INSTALLED_GO_VERSION="$(sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "PATH='/usr/local/go/bin:/usr/local/bin:\$PATH'; if command -v go >/dev/null 2>&1; then go version | awk '{print \$3}' | sed 's/^go//'; fi")"
+          INSTALLED_GO_VERSION="$(sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "PATH='/usr/local/go/bin:/usr/local/bin:\$PATH'; if command -v go >/dev/null 2>&1; then set -- \$(go version); printf '%s' \"\${3#go}\"; fi")"
           if [ "$INSTALLED_GO_VERSION" != "$GO_VERSION" ]; then
             curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${GO_ARCH}.tar.gz" -o /tmp/sikouta-go.tgz
             sshpass -e scp -P "$SSH_PORT" /tmp/sikouta-go.tgz "$SERVER_USER@$SERVER_HOST:/tmp/sikouta-go.tgz"

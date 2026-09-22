@@ -19,10 +19,6 @@ export default async function UserLayout({ children }: { children: React.ReactNo
   const role = String(session?.user?.role || "").trim().toLowerCase();
   const isRetailRole = role === "user" || role === "agent" || role === "master" || role === "marketing";
 
-  if (!session?.backendToken) {
-    redirect("/login");
-  }
-
   if (session?.backendToken && role && !isRetailRole) {
     if (role === "admin" || role === "staff") redirect("/dashboard/admin");
     if (role === "member" || role === "agent_member" || role === "master_member") redirect("/dashboard/member");

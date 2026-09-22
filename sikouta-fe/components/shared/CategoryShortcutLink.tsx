@@ -1,10 +1,34 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
+import {
+  ArrowDownUp,
+  BadgeDollarSign,
+  Bolt,
+  Cable,
+  Car,
+  CreditCard,
+  Flame,
+  Gamepad2,
+  GraduationCap,
+  Grid2X2,
+  HandHeart,
+  HeartPulse,
+  Mail,
+  Phone,
+  QrCode,
+  ShieldCheck,
+  Smartphone,
+  Ticket,
+  Truck,
+  WalletCards,
+  Wifi,
+} from "lucide-react";
 
 type CategoryVisual = {
-  iconSrc: string;
+  Icon: LucideIcon;
+  className: string;
 };
 
 type CategoryShortcutLinkProps = {
@@ -24,95 +48,96 @@ function getCategoryVisual(name: string): CategoryVisual {
     case "pulsa":
     case "pulsa data":
     case "pulsa & data":
-      return { iconSrc: "/sikouta-assets/icons-home-hd/pulsa.png" };
+      return { Icon: Smartphone, className: "text-[#168cff]" };
     case "e-money":
     case "e-wallet":
-      return { iconSrc: "/sikouta-assets/icons-home-hd/ewallet.png" };
+      return { Icon: WalletCards, className: "text-[#168cff]" };
     case "paket data":
-      return { iconSrc: "/sikouta-assets/icons-home-hd/paket-data.png" };
+      return { Icon: ArrowDownUp, className: "text-[#168cff]" };
     case "listrik":
     case "pln":
     case "listrik pln":
-      return { iconSrc: "/sikouta-assets/06_service_icons/listrik_pln_icon.png" };
+      return { Icon: Bolt, className: "text-[#ffad1f]" };
     case "game":
-      return { iconSrc: "/sikouta-assets/icons-hd/voucher-game.png" };
+      return { Icon: Gamepad2, className: "text-[#168cff]" };
     case "tv":
     case "tv kabel":
-      return { iconSrc: "/sikouta-assets/06_service_icons/tv_kabel_icon.png" };
+      return { Icon: Cable, className: "text-[#168cff]" };
     case "pdam":
-      return { iconSrc: "/sikouta-assets/icons-hd/pdam.png" };
+      return { Icon: Grid2X2, className: "text-[#168cff]" };
     case "bpjs":
-      return { iconSrc: "/sikouta-assets/icons-hd/bpjs.png" };
+      return { Icon: ShieldCheck, className: "text-[#15bf77]" };
     case "internet pascabayar":
-      return { iconSrc: "/sikouta-assets/icons-hd/internet-wifi.png" };
+      return { Icon: Wifi, className: "text-[#168cff]" };
     case "hp pascabayar":
-      return { iconSrc: "/sikouta-assets/icons-home-hd/telepon.png" };
+      return { Icon: Phone, className: "text-[#15bf77]" };
     case "masa aktif":
-      return { iconSrc: "/sikouta-assets/icons-home-hd/telepon.png" };
+      return { Icon: Phone, className: "text-[#15bf77]" };
     case "paket telepon":
     case "telepon":
-      return { iconSrc: "/sikouta-assets/icons-home-hd/telepon.png" };
+      return { Icon: Phone, className: "text-[#15bf77]" };
     case "sms":
-      return { iconSrc: "/sikouta-assets/icons-home-hd/sms.png" };
+      return { Icon: Mail, className: "text-[#ffb21f]" };
     case "voucher":
-      return { iconSrc: "/sikouta-assets/icons-hd/voucher-digital.png" };
+      return { Icon: Ticket, className: "text-[#168cff]" };
     case "aktivasi perdana":
-      return { iconSrc: "/sikouta-assets/icons-hd/esim-roaming.png" };
+      return { Icon: Smartphone, className: "text-[#168cff]" };
     case "gas negara":
-      return { iconSrc: "/sikouta-assets/icons-hd/gas-pgn.png" };
+      return { Icon: Flame, className: "text-[#ffad1f]" };
     case "transfer bank":
-      return { iconSrc: "/sikouta-assets/icons-hd/transfer-bank.png" };
+      return { Icon: ArrowDownUp, className: "text-[#168cff]" };
     case "qris":
     case "pembayaran qris":
-      return { iconSrc: "/sikouta-assets/icons-hd/qris.png" };
+      return { Icon: QrCode, className: "text-[#168cff]" };
     case "uang elektronik":
-      return { iconSrc: "/sikouta-assets/icons-hd/uang-elektronik.png" };
+      return { Icon: WalletCards, className: "text-[#168cff]" };
     case "kartu kredit":
-      return { iconSrc: "/sikouta-assets/icons-hd/kartu-kredit.png" };
+      return { Icon: CreditCard, className: "text-[#168cff]" };
     case "asuransi":
-      return { iconSrc: "/sikouta-assets/icons-hd/asuransi.png" };
+      return { Icon: ShieldCheck, className: "text-[#15bf77]" };
     case "streaming":
     case "streaming & musik":
-      return { iconSrc: "/sikouta-assets/icons-hd/streaming-musik.png" };
+      return { Icon: Cable, className: "text-[#168cff]" };
     case "klinik":
     case "kesehatan":
     case "klinik & kesehatan":
-      return { iconSrc: "/sikouta-assets/icons-hd/klinik-kesehatan.png" };
+      return { Icon: HeartPulse, className: "text-[#15bf77]" };
     case "uang sekolah":
-      return { iconSrc: "/sikouta-assets/icons-hd/uang-sekolah.png" };
+      return { Icon: GraduationCap, className: "text-[#168cff]" };
     case "cicilan kendaraan":
-      return { iconSrc: "/sikouta-assets/icons-hd/cicilan-kendaraan.png" };
+      return { Icon: Car, className: "text-[#168cff]" };
     case "cicilan multifinance":
-      return { iconSrc: "/sikouta-assets/icons-hd/cicilan-multifinance.png" };
+      return { Icon: BadgeDollarSign, className: "text-[#168cff]" };
     case "pbb":
-      return { iconSrc: "/sikouta-assets/icons-hd/pbb.png" };
+      return { Icon: BadgeDollarSign, className: "text-[#168cff]" };
     case "pajak":
     case "pajak & negara":
-      return { iconSrc: "/sikouta-assets/icons-hd/pajak-negara.png" };
+      return { Icon: BadgeDollarSign, className: "text-[#168cff]" };
     case "tiket":
     case "tiket perjalanan":
-      return { iconSrc: "/sikouta-assets/icons-hd/tiket-perjalanan.png" };
+      return { Icon: Ticket, className: "text-[#168cff]" };
     case "saldo kartu tol":
-      return { iconSrc: "/sikouta-assets/icons-hd/saldo-kartu-tol.png" };
+      return { Icon: CreditCard, className: "text-[#168cff]" };
     case "parkir digital":
-      return { iconSrc: "/sikouta-assets/icons-hd/parkir-digital.png" };
+      return { Icon: Car, className: "text-[#168cff]" };
     case "kurir":
     case "pengiriman":
     case "kurir & pengiriman":
-      return { iconSrc: "/sikouta-assets/icons-hd/kurir-pengiriman.png" };
+      return { Icon: Truck, className: "text-[#168cff]" };
     case "zakat":
     case "donasi":
     case "zakat & donasi":
-      return { iconSrc: "/sikouta-assets/icons-hd/zakat-donasi.png" };
+      return { Icon: HandHeart, className: "text-[#15bf77]" };
     case "lainnya":
-      return { iconSrc: "/sikouta-assets/icons-home-hd/lainnya.png" };
+      return { Icon: Grid2X2, className: "text-[#6b7d95]" };
     default:
-      return { iconSrc: "/sikouta-assets/06_service_icons/lainnya_icon.png" };
+      return { Icon: Grid2X2, className: "text-[#6b7d95]" };
   }
 }
 
 export function CategoryShortcutLink({ href, label, visualName }: CategoryShortcutLinkProps) {
   const visual = getCategoryVisual(visualName);
+  const Icon = visual.Icon;
 
   return (
     <Link
@@ -122,13 +147,7 @@ export function CategoryShortcutLink({ href, label, visualName }: CategoryShortc
       className="group flex min-h-[86px] min-w-0 flex-col items-center justify-start gap-1.5 rounded-[14px] px-0 py-0.5 text-center transition duration-200 hover:-translate-y-0.5"
     >
       <div className="grid aspect-square w-full max-w-[60px] shrink-0 place-items-center rounded-[16px] bg-white shadow-[0_10px_20px_rgba(6,43,116,0.10)] ring-1 ring-sky-100/90 transition-transform duration-200 group-hover:scale-105">
-        <Image
-          src={visual.iconSrc}
-          alt=""
-          width={42}
-          height={42}
-          className="h-[42px] w-[42px] object-contain drop-shadow-[0_7px_9px_rgba(22,138,242,0.10)]"
-        />
+        <Icon aria-hidden="true" className={`h-8 w-8 ${visual.className}`} strokeWidth={2.8} />
       </div>
       <span className="block px-0.5">
         <span className="line-clamp-2 text-[12px] font-bold leading-4 text-[#06184f]">

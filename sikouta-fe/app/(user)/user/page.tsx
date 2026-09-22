@@ -20,8 +20,8 @@ function formatIDR(value: number) {
 
 function getFirstName(value?: string | null) {
   const name = String(value || "").trim();
-  if (!name) return "Andi";
-  return name.split(/\s+/)[0] || "Andi";
+  if (!name) return null;
+  return name.split(/\s+/)[0] || null;
 }
 
 function StatusBar() {
@@ -39,7 +39,7 @@ function StatusBar() {
   );
 }
 
-function UserHeader({ name }: { name: string }) {
+function UserHeader({ name }: { name: string | null }) {
   return (
     <header className="mt-5">
       <div className="flex items-center justify-between gap-3">
@@ -56,7 +56,9 @@ function UserHeader({ name }: { name: string }) {
       </div>
 
       <div className="mt-4">
-        <h1 className="text-[22px] font-black leading-7 tracking-normal text-[#06184f]">Halo, {name} 👋</h1>
+        <h1 className="text-[22px] font-black leading-7 tracking-normal text-[#06184f]">
+          Halo{name ? `, ${name}` : ""} 👋
+        </h1>
         <p className="mt-0.5 text-[14px] font-medium leading-5 text-[#41598c]">Semoga harimu selalu menyenangkan</p>
       </div>
     </header>

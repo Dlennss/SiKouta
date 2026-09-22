@@ -17,11 +17,11 @@ type BottomNavItem = {
 export function BottomNav({ items }: { items: BottomNavItem[] }) {
   return (
     <>
-      <div aria-hidden="true" className="pointer-events-none h-[calc(84px+env(safe-area-inset-bottom))]" />
+      <div aria-hidden="true" className="pointer-events-none h-[calc(96px+env(safe-area-inset-bottom))]" />
       <div className="fixed inset-x-0 bottom-0 z-[90] mx-auto w-full max-w-[390px] bg-transparent pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] md:max-w-[390px]">
         <nav
           aria-label="Navigasi utama"
-          className="grid h-[76px] grid-cols-4 items-stretch rounded-t-[24px] bg-white px-5 pb-2 pt-2 shadow-[0_-12px_34px_rgba(31,94,146,0.14)] ring-1 ring-sky-100"
+          className="grid h-[86px] grid-cols-4 items-stretch rounded-t-[28px] bg-white px-5 pb-3 pt-2.5 shadow-[0_-16px_40px_rgba(31,94,146,0.16)] ring-1 ring-sky-100"
         >
           {items.map(({ label, href, icon: Icon, imageSrc, active, badge }) => (
             <Link
@@ -35,18 +35,18 @@ export function BottomNav({ items }: { items: BottomNavItem[] }) {
                   : "text-[#60738E]! visited:text-[#60738E]! hover:text-[#0876CE]!"
               }`}
             >
-              <span className="relative flex h-8 w-10 shrink-0 items-center justify-center">
+              <span className="relative flex h-9 w-11 shrink-0 items-center justify-center">
                 {imageSrc ? (
-                  <Image src={imageSrc} alt="" width={28} height={28} className="h-[28px] w-[28px] object-contain" aria-hidden="true" />
+                  <Image src={imageSrc} alt="" width={32} height={32} className="h-[32px] w-[32px] object-contain" aria-hidden="true" />
                 ) : Icon ? (
-                  <Icon aria-hidden="true" className="h-6 w-6 shrink-0" strokeWidth={2} />
+                  <Icon aria-hidden="true" className="h-7 w-7 shrink-0" strokeWidth={2.2} />
                 ) : null}
                 {badge}
               </span>
-              <span className="block max-w-full whitespace-nowrap text-[11px] font-semibold leading-4 tracking-normal">
+              <span className="block max-w-full whitespace-nowrap text-[11.5px] font-bold leading-4 tracking-normal">
                 {label}
               </span>
-              {active ? <span className="absolute bottom-0 h-1 w-9 rounded-full bg-[#0876CE]" /> : null}
+              {active ? <span className="absolute bottom-0 h-1.5 w-10 rounded-full bg-[#0876CE]" /> : null}
             </Link>
           ))}
         </nav>

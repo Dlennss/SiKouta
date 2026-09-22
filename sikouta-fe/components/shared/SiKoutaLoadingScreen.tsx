@@ -20,7 +20,6 @@ function UserSkeletonScreen() {
         </div>
 
         <div className="relative flex items-center justify-between text-[17px] font-black leading-none">
-          <span>9:41</span>
           <span className="h-3 w-16 rounded-full bg-white/90" />
         </div>
 

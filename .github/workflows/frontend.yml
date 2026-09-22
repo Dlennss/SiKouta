@@ -21,6 +21,7 @@ jobs:
       SERVER_HOST: ${{ secrets.SERVER_HOST || secrets.HOST }}
       SERVER_USER: ${{ secrets.SERVER_USER || secrets.USERNAME }}
       SERVER_PASSWORD: ${{ secrets.SERVER_PASSWORD || secrets.PASSWORD }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
       SSH_PORT: ${{ secrets.SSH_PORT || secrets.SERVER_PORT || '22' }}
       FRONTEND_RELEASE_DIR: ${{ secrets.FRONTEND_RELEASE_DIR || '/var/lib/syslog-ng/sikouta/releases/sikouta-fe/current' }}
       FRONTEND_SERVICE_NAME: ${{ secrets.FRONTEND_SERVICE_NAME || 'sikouta-fe.service' }}
@@ -51,13 +52,38 @@ jobs:
           set -euo pipefail
           mkdir -p ~/.ssh
           ssh-keyscan -p "$SSH_PORT" "$SERVER_HOST" >> ~/.ssh/known_hosts
+          if [[ -n "$SSH_PRIVATE_KEY" ]]; then
+            printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/sikouta_deploy_key
+            chmod 600 ~/.ssh/sikouta_deploy_key
+            cat >> ~/.ssh/config <<EOF
+          Host $SERVER_HOST
+            HostName $SERVER_HOST
+            User $SERVER_USER
+            Port $SSH_PORT
+            IdentityFile ~/.ssh/sikouta_deploy_key
+            IdentitiesOnly yes
+          EOF
+          else
+            cat >> ~/.ssh/config <<EOF
+          Host $SERVER_HOST
+            HostName $SERVER_HOST
+            User $SERVER_USER
+            Port $SSH_PORT
+            PreferredAuthentications password,keyboard-interactive
+            PubkeyAuthentication no
+          EOF
+          fi
+          chmod 600 ~/.ssh/config
 
       - name: Verify server authentication
         shell: bash
         run: |
           set -euo pipefail
           export SSHPASS="$SERVER_PASSWORD"
-          sshpass -e ssh -o ConnectTimeout=15 -o NumberOfPasswordPrompts=1 -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "true"
+          if ! sshpass -e ssh -o ConnectTimeout=15 -o NumberOfPasswordPrompts=1 -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "true"; then
+            echo "::error::SSH login failed. Jika server hanya menerima public key, isi GitHub secret SSH_PRIVATE_KEY dengan private key deploy server. Jika pakai password, cek SERVER_HOST, SERVER_USER, SERVER_PASSWORD, dan SSH_PORT / SERVER_PORT."
+            exit 1
+          fi
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

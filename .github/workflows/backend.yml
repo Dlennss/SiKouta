@@ -129,7 +129,27 @@ jobs:
           set -euo pipefail
           export SSHPASS="$SERVER_PASSWORD"
           if [[ -z "$BACKEND_ENV" ]]; then
+            sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "BACKEND_SOURCE_DIR='$BACKEND_SOURCE_DIR' bash -s" <<'REMOTE'
+          set -euo pipefail
+          if [ -f "$BACKEND_SOURCE_DIR/.env" ]; then
             echo "BACKEND_ENV is empty; keeping the existing server environment."
+            exit 0
+          fi
+          if [ ! -f "$BACKEND_SOURCE_DIR/.env.example" ]; then
+            echo "BACKEND_ENV is empty and .env.example was not found." >&2
+            exit 1
+          fi
+          cp "$BACKEND_SOURCE_DIR/.env.example" "$BACKEND_SOURCE_DIR/.env"
+          sed -i \
+            -e 's#^JWT_SECRET=.*#JWT_SECRET=sikouta-local-jwt-secret#' \
+            -e 's#^ADMIN_TOKEN=.*#ADMIN_TOKEN=sikouta-admin-token#' \
+            -e 's#^PULSA24JAM_BASE_URL=.*#PULSA24JAM_BASE_URL=http://127.0.0.1#' \
+            -e 's#^PULSA24JAM_API_KEY=.*#PULSA24JAM_API_KEY=disabled#' \
+            -e 's#^PULSA24JAM_PIN=.*#PULSA24JAM_PIN=000000#' \
+            "$BACKEND_SOURCE_DIR/.env"
+          chmod 600 "$BACKEND_SOURCE_DIR/.env"
+          echo "Created backend .env from .env.example for fresh server."
+          REMOTE
             exit 0
           fi
           printf '%s\n' "$BACKEND_ENV" | sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
@@ -152,6 +172,11 @@ jobs:
             apt-get update
             apt-get install -y python3
           fi
+          if ! command -v psql >/dev/null 2>&1 || ! id postgres >/dev/null 2>&1; then
+            apt-get update
+            apt-get install -y postgresql postgresql-client
+          fi
+          systemctl enable --now postgresql >/dev/null 2>&1 || true
           DB_INFO="$(python3 - "$ENV_FILE" <<'PY'
           import sys
           from urllib.parse import unquote, urlparse
@@ -217,6 +242,33 @@ jobs:
           print(f"ALTER DATABASE {sql_ident(db_name)} OWNER TO {sql_ident(db_user)};")
           PY
           echo "PostgreSQL credential backend sudah disinkronkan."
+          REMOTE
+
+      - name: Prepare backend build runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          export SSHPASS="$SERVER_PASSWORD"
+          printf '%s\n' "$SERVER_PASSWORD" | sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "sudo -S -p '' bash -s" <<'REMOTE'
+          set -euo pipefail
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update
+          apt-get install -y build-essential ca-certificates curl libc6-dev pkg-config rsync
+          if ! command -v go >/dev/null 2>&1; then
+            GO_VERSION=1.24.2
+            ARCH="$(dpkg --print-architecture)"
+            case "$ARCH" in
+              amd64) GO_ARCH=amd64 ;;
+              arm64) GO_ARCH=arm64 ;;
+              *) echo "Unsupported architecture: $ARCH" >&2; exit 1 ;;
+            esac
+            curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${GO_ARCH}.tar.gz" -o /tmp/go.tgz
+            rm -rf /usr/local/go
+            tar -C /usr/local -xzf /tmp/go.tgz
+            ln -sfn /usr/local/go/bin/go /usr/local/bin/go
+            ln -sfn /usr/local/go/bin/gofmt /usr/local/bin/gofmt
+          fi
+          go version
           REMOTE
 
       - name: Build and publish backend release

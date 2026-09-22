@@ -197,7 +197,7 @@ jobs:
           done
           REMOTE
 
-      - name: Restart SiKouta frontend and Nginx
+      - name: Restart SiKouta frontend
         shell: bash
         run: |
           set -euo pipefail
@@ -237,10 +237,9 @@ jobs:
           UNIT
           systemctl daemon-reload
           systemctl enable $FRONTEND_SERVICE_NAME
-          nginx -t
-          if ! systemctl restart $FRONTEND_SERVICE_NAME nginx || ! systemctl is-active --quiet $FRONTEND_SERVICE_NAME nginx; then
+          if ! systemctl restart $FRONTEND_SERVICE_NAME || ! systemctl is-active --quiet $FRONTEND_SERVICE_NAME; then
             journalctl -u $FRONTEND_SERVICE_NAME -n 120 --no-pager || true
-            systemctl --no-pager --full status $FRONTEND_SERVICE_NAME nginx || true
+            systemctl --no-pager --full status $FRONTEND_SERVICE_NAME || true
             exit 1
           fi
           REMOTE

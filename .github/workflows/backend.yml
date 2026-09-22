@@ -251,31 +251,36 @@ jobs:
         run: |
           set -euo pipefail
           export SSHPASS="$SERVER_PASSWORD"
+          GO_VERSION=1.24.2
           printf '%s\n' "$SERVER_PASSWORD" | sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "sudo -S -p '' bash -s" <<'REMOTE'
           set -euo pipefail
           export DEBIAN_FRONTEND=noninteractive
           apt-get update
-          apt-get install -y build-essential ca-certificates curl libc6-dev pkg-config rsync
-          GO_VERSION=1.24.2
-          ARCH="$(dpkg --print-architecture)"
-          case "$ARCH" in
+          apt-get install -y build-essential ca-certificates libc6-dev pkg-config rsync
+          REMOTE
+
+          REMOTE_ARCH="$(sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "dpkg --print-architecture")"
+          case "$REMOTE_ARCH" in
             amd64) GO_ARCH=amd64 ;;
             arm64) GO_ARCH=arm64 ;;
-            *) echo "Unsupported architecture: $ARCH" >&2; exit 1 ;;
+            *) echo "Unsupported architecture: $REMOTE_ARCH" >&2; exit 1 ;;
           esac
-          INSTALLED_GO_VERSION=""
-          if command -v go >/dev/null 2>&1; then
-            INSTALLED_GO_VERSION="$(go version | awk '{print $3}' | sed 's/^go//')"
-          fi
+
+          INSTALLED_GO_VERSION="$(sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "PATH='/usr/local/go/bin:/usr/local/bin:\$PATH'; if command -v go >/dev/null 2>&1; then go version | awk '{print \$3}' | sed 's/^go//'; fi")"
           if [ "$INSTALLED_GO_VERSION" != "$GO_VERSION" ]; then
-            curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${GO_ARCH}.tar.gz" -o /tmp/go.tgz
-            rm -rf /usr/local/go
-            tar -C /usr/local -xzf /tmp/go.tgz
-            ln -sfn /usr/local/go/bin/go /usr/local/bin/go
-            ln -sfn /usr/local/go/bin/gofmt /usr/local/bin/gofmt
-          fi
-          go version
+            curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${GO_ARCH}.tar.gz" -o /tmp/sikouta-go.tgz
+            sshpass -e scp -P "$SSH_PORT" /tmp/sikouta-go.tgz "$SERVER_USER@$SERVER_HOST:/tmp/sikouta-go.tgz"
+            printf '%s\n' "$SERVER_PASSWORD" | sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "sudo -S -p '' bash -s" <<'REMOTE'
+          set -euo pipefail
+          rm -rf /usr/local/go
+          tar -C /usr/local -xzf /tmp/sikouta-go.tgz
+          rm -f /tmp/sikouta-go.tgz
+          ln -sfn /usr/local/go/bin/go /usr/local/bin/go
+          ln -sfn /usr/local/go/bin/gofmt /usr/local/bin/gofmt
           REMOTE
+          fi
+
+          sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "PATH='/usr/local/go/bin:/usr/local/bin:\$PATH' go version"
 
       - name: Build and publish backend release
         shell: bash

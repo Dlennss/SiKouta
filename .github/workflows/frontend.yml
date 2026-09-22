@@ -132,7 +132,7 @@ jobs:
         run: |
           set -euo pipefail
           export SSHPASS="$SERVER_PASSWORD"
-          printf '%s\n' "$SERVER_PASSWORD" | sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "sudo -S -p '' bash -s" <<REMOTE
+          { printf '%s\n' "$SERVER_PASSWORD" || true; } | sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "sudo -S -p '' bash -s" <<REMOTE
           set -euo pipefail
           export DEBIAN_FRONTEND=noninteractive
           apt-get update
@@ -202,7 +202,7 @@ jobs:
         run: |
           set -euo pipefail
           export SSHPASS="$SERVER_PASSWORD"
-          printf '%s\n' "$SERVER_PASSWORD" | sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "sudo -S -p '' bash -s" <<REMOTE
+          { printf '%s\n' "$SERVER_PASSWORD" || true; } | sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "sudo -S -p '' bash -s" <<REMOTE
           set -euo pipefail
           if [ ! -f /etc/systemd/system/$FRONTEND_SERVICE_NAME ]; then
             cat > /etc/systemd/system/$FRONTEND_SERVICE_NAME <<UNIT

@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { getProviders, signIn } from "next-auth/react";
-import { Apple, Eye, EyeOff, Headphones, LockKeyhole, Mail } from "lucide-react";
+import { Eye, EyeOff, LockKeyhole, Mail } from "lucide-react";
 import TurnstileWidget from "@/components/TurnstileWidget";
 import { decodeJwt } from "@/lib/jwt";
 
@@ -164,15 +164,7 @@ export function LoginCard() {
           <div className="absolute -bottom-24 left-1/2 h-44 w-[520px] -translate-x-[42%] rounded-[50%] bg-[#b8ddff]/65" />
         </div>
 
-        <div className="relative flex items-center justify-between text-[17px] font-black leading-none">
-          <span>9:41</span>
-          <Link href="/" className="flex items-center gap-2 text-[15px] font-black text-[#06184f]">
-            <span>Butuh Bantuan?</span>
-            <Headphones className="h-5 w-5" />
-          </Link>
-        </div>
-
-        <div className="relative mx-auto mt-20 flex max-w-[330px] flex-col items-center text-center">
+        <div className="relative mx-auto mt-12 flex max-w-[330px] flex-col items-center text-center">
           <Image src="/sikouta-assets/02_login/logo_symbol.png" alt="" width={118} height={118} priority className="h-[118px] w-[118px] object-contain" />
           <Image src="/sikouta-assets/02_login/brand_wordmark.png" alt="Sikouta" width={230} height={70} priority className="mt-1 h-auto w-[205px] object-contain" />
           <h1 className="mt-3 text-[22px] font-black leading-7 tracking-normal">Masuk ke akun Anda</h1>
@@ -279,7 +271,7 @@ export function LoginCard() {
             <div className="h-px flex-1 bg-[#cbdcf2]" />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1">
             <button
               type="button"
               className="flex h-[62px] items-center justify-center gap-3 rounded-[15px] border border-slate-200 bg-white text-[18px] font-black text-[#06184f] shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-all hover:border-sky-200 hover:bg-sky-50/50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
@@ -294,14 +286,6 @@ export function LoginCard() {
             >
               <Image src="/google.svg" alt="" width={27} height={27} aria-hidden="true" />
               <span>Google</span>
-            </button>
-            <button
-              type="button"
-              className="flex h-[62px] items-center justify-center gap-3 rounded-[15px] border border-slate-200 bg-white text-[18px] font-black text-[#06184f] shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-all hover:border-sky-200 hover:bg-sky-50/50 active:scale-[0.98]"
-              onClick={() => setErr("Login Apple belum dikonfigurasi.")}
-            >
-              <Apple className="h-8 w-8 fill-black text-black" />
-              <span>Apple</span>
             </button>
           </div>
 

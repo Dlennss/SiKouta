@@ -79,7 +79,7 @@ func (s *AppOrderFulfillmentService) DispatchPaidOrder(ctx context.Context, orde
 		return fmt.Errorf("%s", msg)
 	}
 	providerQty := order.Qty
-	if provider == providerpkg.Pulsa24JamProviderName {
+	if strings.EqualFold(provider, providerpkg.Pulsa24JamProviderName) {
 		providerProductCode, providerQty = resolvePulsa24JamAppRequest(providerProductCode, order)
 	}
 
@@ -241,7 +241,7 @@ func (s *AppOrderFulfillmentService) callAppOrderProvider(ctx context.Context, p
 		if strings.TrimSpace(sn) == "" {
 			sn = strings.TrimSpace(acc.Ticket)
 		}
-	case "Pulsa24Jam":
+	case "pulsa24jam":
 		client := s.providerClients["Pulsa24Jam"]
 		if client == nil {
 			return 0, "", 0, "", fmt.Errorf("Pulsa24Jam client belum tersedia")

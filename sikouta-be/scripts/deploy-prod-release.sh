@@ -111,6 +111,7 @@ go run ./scripts/apply_sql_migration sql/20260910_seed_marketing_dummy_balance.s
 go run ./scripts/apply_sql_migration sql/20261007_enable_pulsa24jam_catalog_sync.sql
 go run ./scripts/apply_sql_migration sql/20261007_reactivate_pulsa24jam_category_fees.sql
 go run ./scripts/apply_sql_migration sql/20261007_ensure_catalog_upsert_constraints.sql
+go run ./scripts/apply_sql_migration sql/20261007_ensure_produk_provider_map_compat_columns.sql
 go run ./scripts/seed_pulsa24jam_catalog_file
 if ! go run ./scripts/sync_pulsa24jam_catalog; then
   echo "warning: Pulsa24Jam catalog sync failed; deploy continues. Check PULSA24JAM_BASE_URL/API_KEY/PIN and run sync again after credentials are fixed." >&2

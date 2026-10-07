@@ -108,6 +108,16 @@ func TestAppOrderPulsa24JamNestedValues(t *testing.T) {
 	}
 }
 
+func TestAppOrderPulsa24JamRequestFromRows(t *testing.T) {
+	raw := `{"product":"GOPAY","qty":100000,"dest":"085771187308","refid":"SIA1"}`
+	row := repository.AppOrderRow{Dest: "0857", Qty: 1}
+	providerRow := repository.AppOrderProviderTrxRow{RefID: "SIA0", RawRequest: &raw}
+	got := appOrderPulsa24JamRequestFromRows(&row, &providerRow)
+	if got.Product != "GOPAY" || got.Qty != 100000 || got.Dest != "085771187308" || got.RefID != "SIA1" {
+		t.Fatalf("request = %+v", got)
+	}
+}
+
 func TestResolvePulsa24JamAppRequest(t *testing.T) {
 	tests := []struct {
 		name        string

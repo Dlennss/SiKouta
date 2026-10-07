@@ -67,6 +67,9 @@ func (s *AppOrderService) refreshPulsa24JamOrderStatus(ctx context.Context, row 
 	if price <= 0 {
 		price = appOrderPulsa24JamNestedInt(response.Body, "biaya_perkiraan", "price", "harga")
 	}
+	if price <= 0 && row.HargaDasar > 0 {
+		price = row.HargaDasar
+	}
 	sn := strings.TrimSpace(firstText(
 		appOrderPulsa24JamNestedText(response.Body, "sn", "provider_ref", "noref", "no_referensi"),
 		response.ProviderRef,

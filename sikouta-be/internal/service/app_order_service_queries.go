@@ -18,6 +18,12 @@ func (s *AppOrderService) GetByInvoiceID(ctx context.Context, invoiceID string) 
 	if err != nil {
 		return nil, err
 	}
+	s.refreshPulsa24JamOrderStatus(ctx, row)
+	if row.Status != "processing_provider" {
+		if refreshed, refreshErr := s.orderRepo.GetByInvoiceID(ctx, invoiceID); refreshErr == nil && refreshed != nil {
+			row = refreshed
+		}
+	}
 	s.attachBillingInquiry(ctx, row)
 	return row, nil
 }
@@ -43,7 +49,11 @@ func (s *AppOrderService) ListByMemberID(ctx context.Context, f repository.AppOr
 	if f.Offset < 0 {
 		f.Offset = 0
 	}
-	return s.orderRepo.ListByMemberID(ctx, f)
+	rows, err := s.orderRepo.ListByMemberID(ctx, f)
+	if err != nil {
+		return nil, err
+	}
+	return s.refreshPulsa24JamOrderStatuses(ctx, rows), nil
 }
 
 func (s *AppOrderService) List(ctx context.Context, f repository.AppOrderListFilter) ([]repository.AppOrderRow, error) {
@@ -72,7 +82,18 @@ func (s *AppOrderService) List(ctx context.Context, f repository.AppOrderListFil
 	if f.Offset < 0 {
 		f.Offset = 0
 	}
-	return s.orderRepo.List(ctx, f)
+	rows, err := s.orderRepo.List(ctx, f)
+	if err != nil {
+		return nil, err
+	}
+	return s.refreshPulsa24JamOrderStatuses(ctx, rows), nil
+}
+
+func (s *AppOrderService) refreshPulsa24JamOrderStatuses(ctx context.Context, rows []repository.AppOrderRow) []repository.AppOrderRow {
+	for index := range rows {
+		s.refreshPulsa24JamOrderStatus(ctx, &rows[index])
+	}
+	return rows
 }
 func (s *AppOrderService) attachBillingInquiry(ctx context.Context, row *repository.AppOrderRow) {
 	if row == nil || s.appProviderRepo == nil {

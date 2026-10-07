@@ -67,6 +67,37 @@ func TestAppOrderProviderProductUnavailable(t *testing.T) {
 	}
 }
 
+func TestAppOrderPulsa24JamStatusPayFinalStatus(t *testing.T) {
+	tests := []struct {
+		name string
+		body string
+		want string
+	}{
+		{
+			name: "nested provider pending is not success",
+			body: `{"ok":true,"transaksi_member":{"status":1,"keterangan":"Sedang diproses"}}`,
+			want: "pending",
+		},
+		{
+			name: "nested provider success",
+			body: `{"ok":true,"transaksi_member":{"status":2,"keterangan":"Sukses","sn":"ABC123"}}`,
+			want: "success",
+		},
+		{
+			name: "nested provider failed",
+			body: `{"ok":true,"transaksi_member":{"status":3,"keterangan":"Gagal"}}`,
+			want: "failed",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := appOrderPulsa24JamStatusPayFinalStatus(tt.body); got != tt.want {
+				t.Fatalf("status = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestResolvePulsa24JamAppRequest(t *testing.T) {
 	tests := []struct {
 		name        string

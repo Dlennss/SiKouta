@@ -37,7 +37,7 @@ func Register(mux *http.ServeMux, wrap Middleware, db *sql.DB, jwtSecret []byte,
 	H2HProdukRouter(mux, db)
 	AppAdRouter(mux, db)
 	AppOrderRouter(mux, db, jwtSecret, ysClient, gmClient, extraClients...)
-	AppOrderMeRouter(mux, db, jwtSecret)
+	AppOrderMeRouter(mux, db, jwtSecret, extraClients...)
 	AppOrderRefundMeRouter(mux, db, jwtSecret)
 	AppOrderAdminRouter(mux, wrap, db)
 	AppOrderRefundAdminRouter(mux, wrap, db)

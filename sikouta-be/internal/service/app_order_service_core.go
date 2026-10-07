@@ -20,11 +20,18 @@ type AppOrderService struct {
 	kategoriFeeRepo  *repository.KategoriFeeAppRepository
 	appProviderRepo  *repository.AppOrderProviderTrxRepository
 	billingCheckRepo *repository.AppBillingCheckRepository
+	callbackRepo     *repository.ProviderCallbackRepository
+	retailRepo       *repository.RetailRepository
 	Pulsa24JamClient *provider.Pulsa24JamAdapter
 }
 
 func (s *AppOrderService) SetPulsa24JamClient(client *provider.Pulsa24JamAdapter) {
 	s.Pulsa24JamClient = client
+}
+
+func (s *AppOrderService) SetSettlementRepos(callbackRepo *repository.ProviderCallbackRepository, retailRepo *repository.RetailRepository) {
+	s.callbackRepo = callbackRepo
+	s.retailRepo = retailRepo
 }
 
 func (s *AppOrderService) validatePulsa24JamProduct(ctx context.Context, productCode string) (*provider.Pulsa24JamProduct, error) {

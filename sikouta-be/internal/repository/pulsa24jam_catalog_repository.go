@@ -44,9 +44,20 @@ func (r *Pulsa24JamCatalogRepository) Sync(ctx context.Context, items []Pulsa24J
 	defer tx.Rollback()
 
 	if _, err := tx.ExecContext(ctx, `
+UPDATE public.provider
+SET aktif = true, diubah_pada = now()
+WHERE LOWER(TRIM(nama)) = 'pulsa24jam'
+`); err != nil {
+		return nil, err
+	}
+	if _, err := tx.ExecContext(ctx, `
 INSERT INTO public.provider (nama, aktif, dibuat_pada, diubah_pada)
-VALUES ('Pulsa24Jam', true, now(), now())
-ON CONFLICT (nama) DO UPDATE SET aktif = true, diubah_pada = now()
+SELECT 'Pulsa24Jam', true, now(), now()
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM public.provider
+  WHERE LOWER(TRIM(nama)) = 'pulsa24jam'
+)
 `); err != nil {
 		return nil, err
 	}

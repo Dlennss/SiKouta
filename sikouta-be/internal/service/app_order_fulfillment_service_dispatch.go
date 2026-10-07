@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"sikouta/internal/helper"
@@ -82,20 +83,22 @@ func (s *AppOrderFulfillmentService) DispatchPaidOrder(ctx context.Context, orde
 	if strings.EqualFold(provider, providerpkg.Pulsa24JamProviderName) {
 		providerProductCode, providerQty = resolvePulsa24JamAppRequest(providerProductCode, order)
 	}
+	providerRefID := appOrderProviderRefID(provider, order)
 
 	reqPayload := map[string]any{
 		"provider": provider,
 		"product":  providerProductCode,
 		"qty":      providerQty,
 		"dest":     order.Dest,
-		"refid":    order.InvoiceID,
+		"refid":    providerRefID,
+		"invoice":  order.InvoiceID,
 	}
 	reqJSON, _ := json.Marshal(reqPayload)
 
 	createIn := repository.AppOrderProviderTrxCreateInput{
 		AppOrderID: order.ID,
 		Provider:   provider,
-		RefID:      order.InvoiceID,
+		RefID:      providerRefID,
 		Status:     "pending",
 		RawRequest: string(reqJSON),
 	}
@@ -103,12 +106,12 @@ func (s *AppOrderFulfillmentService) DispatchPaidOrder(ctx context.Context, orde
 		return err
 	}
 
-	row, err := s.providerTrxRepo.GetByRefID(ctx, order.InvoiceID, provider)
+	row, err := s.providerTrxRepo.GetByRefID(ctx, providerRefID, provider)
 	if err != nil {
 		return err
 	}
 
-	hs, body, price, sn, callErr := s.callAppOrderProvider(ctx, provider, providerProductCode, providerQty, order)
+	hs, body, price, sn, callErr := s.callAppOrderProvider(ctx, provider, providerProductCode, providerQty, providerRefID, order)
 
 	rawRespJSON, _ := json.Marshal(map[string]any{
 		"http_status": hs,
@@ -228,7 +231,36 @@ func (s *AppOrderFulfillmentService) DispatchPaidOrder(ctx context.Context, orde
 	return nil
 }
 
-func (s *AppOrderFulfillmentService) callAppOrderProvider(ctx context.Context, provider, providerProductCode string, providerQty int64, order *repository.AppOrderRow) (hs int, body string, price int64, sn string, callErr error) {
+func appOrderProviderRefID(provider string, order *repository.AppOrderRow) string {
+	if order == nil {
+		return ""
+	}
+	if !strings.EqualFold(provider, providerpkg.Pulsa24JamProviderName) {
+		return strings.TrimSpace(order.InvoiceID)
+	}
+	prefix := "SIA" + strings.ToUpper(strconv.FormatInt(order.ID, 36))
+	suffix := strings.ToUpper(strings.TrimSpace(order.InvoiceID))
+	var clean strings.Builder
+	for _, r := range suffix {
+		if (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') {
+			clean.WriteRune(r)
+		}
+	}
+	suffix = clean.String()
+	maxSuffix := 20 - len(prefix)
+	if maxSuffix <= 0 {
+		if len(prefix) > 20 {
+			return prefix[:20]
+		}
+		return prefix
+	}
+	if len(suffix) > maxSuffix {
+		suffix = suffix[len(suffix)-maxSuffix:]
+	}
+	return prefix + suffix
+}
+
+func (s *AppOrderFulfillmentService) callAppOrderProvider(ctx context.Context, provider, providerProductCode string, providerQty int64, providerRefID string, order *repository.AppOrderRow) (hs int, body string, price int64, sn string, callErr error) {
 	switch provider {
 	case "gemilang":
 		if s.gmClient == nil {
@@ -251,7 +283,7 @@ func (s *AppOrderFulfillmentService) callAppOrderProvider(ctx context.Context, p
 			Product: providerProductCode,
 			Dest:    order.Dest,
 			Qty:     providerQty,
-			RefID:   order.InvoiceID,
+			RefID:   providerRefID,
 		})
 		callErr = nextErr
 		if resp != nil {

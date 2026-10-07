@@ -1,6 +1,7 @@
 package service
 
 import (
+	"strings"
 	"testing"
 
 	"sikouta/internal/repository"
@@ -35,6 +36,22 @@ func TestAppOrderProviderImmediateRejectPulsa24Jam(t *testing.T) {
 				t.Fatalf("appOrderProviderImmediateReject() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestAppOrderProviderRefIDPulsa24Jam(t *testing.T) {
+	order := &repository.AppOrderRow{ID: 2, InvoiceID: "INV-20261007142842-A9B4DF0D"}
+	got := appOrderProviderRefID("pulsa24jam", order)
+	if got != "SIA207142842A9B4DF0D" {
+		t.Fatalf("refid = %q, want %q", got, "SIA207142842A9B4DF0D")
+	}
+	if len(got) > 20 {
+		t.Fatalf("refid too long: %q len=%d", got, len(got))
+	}
+	for _, r := range got {
+		if !strings.ContainsRune("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", r) {
+			t.Fatalf("refid contains non alnum uppercase rune %q in %q", r, got)
+		}
 	}
 }
 

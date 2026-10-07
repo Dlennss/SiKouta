@@ -205,7 +205,7 @@ func (a *Pulsa24JamAdapter) Products(ctx context.Context, product string) ([]Pul
 	}
 	var out Pulsa24JamProductsResponse
 	if err := json.Unmarshal(body, &out); err != nil {
-		return nil, fmt.Errorf("response produk Pulsa24Jam tidak valid: %w", err)
+		return nil, fmt.Errorf("response produk Pulsa24Jam tidak valid dari %s (HTTP %d): %w; body=%s", a.trxURL(), res.StatusCode, err, compactPulsa24JamBody(body))
 	}
 	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusMultipleChoices || (out.OK != nil && !*out.OK) || (out.Success != nil && !*out.Success) {
 		return nil, fmt.Errorf("produk Pulsa24Jam gagal: %s", firstNonEmpty(out.Message, out.Msg, string(body)))
@@ -467,6 +467,14 @@ func firstNonEmpty(values ...string) string {
 		}
 	}
 	return ""
+}
+
+func compactPulsa24JamBody(body []byte) string {
+	text := strings.Join(strings.Fields(string(body)), " ")
+	if len(text) > 240 {
+		return text[:240] + "..."
+	}
+	return text
 }
 
 func redactPulsa24JamPayload(payload Pulsa24JamPayRequest) map[string]any {

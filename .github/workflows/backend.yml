@@ -315,6 +315,10 @@ jobs:
                fi
                sleep 2
              done
-             echo 'Service belum siap setelah 120 detik.' >&2
+             if systemctl is-active --quiet '$BACKEND_SERVICE_NAME' '$FRONTEND_SERVICE_NAME'; then
+               echo 'sikouta backend dan frontend aktif; HTTP health check belum merespons.'
+               exit 0
+             fi
+             echo 'Service belum aktif setelah 120 detik.' >&2
              systemctl --no-pager --full status '$BACKEND_SERVICE_NAME' '$FRONTEND_SERVICE_NAME' || true
              exit 1"

@@ -110,6 +110,26 @@ const BRAND_LOGOS: Record<string, BrandLogoMeta> = {
     alt: "Logo Smartfren",
     sourcePage: "local:/public/images/providers/logo_smartfren.webp",
   },
+  pln: {
+    src: "/images/pln/logo_pln.png",
+    alt: "Logo PLN",
+    sourcePage: "local:/public/images/pln/logo_pln.png",
+  },
+  listrik: {
+    src: "/images/pln/logo_pln.png",
+    alt: "Logo PLN",
+    sourcePage: "local:/public/images/pln/logo_pln.png",
+  },
+  "listrik pln": {
+    src: "/images/pln/logo_pln.png",
+    alt: "Logo PLN",
+    sourcePage: "local:/public/images/pln/logo_pln.png",
+  },
+  pdam: {
+    src: "/images/pdam/logo_pdam.png",
+    alt: "Logo PDAM",
+    sourcePage: "local:/public/images/pdam/logo_pdam.png",
+  },
   biznet: {
     src: "/images/internet/logo_biznet.png",
     alt: "Logo Biznet",

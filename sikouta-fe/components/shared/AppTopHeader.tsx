@@ -22,24 +22,24 @@ export function AppTopHeader({ isLoggedIn = false, userName, saldo, role }: AppT
   if (pathname === "/" || pathname === "/user") return null;
 
   return (
-    <header className="sticky top-0 z-30 overflow-hidden bg-white/96 px-4 py-2 text-[#06184f] shadow-[0_10px_28px_rgba(22,120,242,0.08)] backdrop-blur">
+    <header className="sticky top-0 z-30 overflow-hidden bg-white/96 px-4 py-3 text-[#06184f] shadow-[0_10px_28px_rgba(22,120,242,0.08)] backdrop-blur">
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-sky-100" />
 
-      <div className="relative flex h-12 items-center justify-between gap-3">
+      <div className="relative flex h-[52px] items-center justify-between gap-3">
         <div className="flex min-w-0 flex-1 items-center">
           <Link
             href={homeHref}
             prefetch={false}
-            className="inline-flex h-11 max-w-[68vw] min-w-0 items-center"
+            className="inline-flex h-12 max-w-[68vw] min-w-0 items-center"
             aria-label="SiKouta"
           >
-            <span className="relative block h-10 w-[170px] min-w-0">
+            <span className="relative block h-11 w-[184px] min-w-0">
               <Image
-                src="/sikouta-assets/03_dashboard/logo_header.png"
+                src="/brand/logo.svg"
                 alt="SiKouta"
                 fill
                 priority
-                sizes="150px"
+                sizes="184px"
                 className="object-contain object-left"
               />
             </span>

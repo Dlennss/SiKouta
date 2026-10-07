@@ -39,9 +39,6 @@ JOIN LATERAL (
     a.id DESC
   LIMIT 1
 ) app ON true
-JOIN public.kategori_fee_app kfa
-  ON kfa.kategori_id = p.kategori_id
- AND kfa.aktif = true
 WHERE k.aktif = true
 ORDER BY k.id ASC
 `)

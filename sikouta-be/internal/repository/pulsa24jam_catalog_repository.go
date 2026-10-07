@@ -75,7 +75,9 @@ ON CONFLICT (nama) DO UPDATE SET aktif = true, diubah_pada = now()
 INSERT INTO public.kategori_fee_app
   (kategori_id, fee_master, fee_agent, fee_user, fee_non_user, aktif, created_at, updated_at)
 VALUES ($1,0,0,0,0,true,now(),now())
-ON CONFLICT (kategori_id) DO NOTHING
+ON CONFLICT (kategori_id) DO UPDATE SET
+  aktif = true,
+  updated_at = now()
 `, categoryID); err != nil {
 			return nil, err
 		}

@@ -64,7 +64,14 @@ func (s *AppOrderService) refreshPulsa24JamOrderStatus(ctx context.Context, row 
 	})
 	message := strings.TrimSpace(firstText(response.Message, response.Body))
 	price := response.Price
-	sn := strings.TrimSpace(firstText(response.ProviderRef, response.Message))
+	if price <= 0 {
+		price = appOrderPulsa24JamNestedInt(response.Body, "biaya_perkiraan", "price", "harga")
+	}
+	sn := strings.TrimSpace(firstText(
+		appOrderPulsa24JamNestedText(response.Body, "sn", "provider_ref", "noref", "no_referensi"),
+		response.ProviderRef,
+		response.Message,
+	))
 
 	finalStatus := appOrderPulsa24JamStatusPayFinalStatus(response.Body, response.Message, response.RC)
 	if finalStatus == "success" {
@@ -250,4 +257,56 @@ func appOrderPulsa24JamValueStatus(value any) string {
 	default:
 		return ""
 	}
+}
+
+func appOrderPulsa24JamNestedInt(raw string, keys ...string) int64 {
+	value, ok := appOrderPulsa24JamNestedValue(raw, keys...)
+	if !ok {
+		return 0
+	}
+	return parsePulsa24JamInt(fmt.Sprint(value))
+}
+
+func appOrderPulsa24JamNestedText(raw string, keys ...string) string {
+	value, ok := appOrderPulsa24JamNestedValue(raw, keys...)
+	if !ok {
+		return ""
+	}
+	return strings.TrimSpace(fmt.Sprint(value))
+}
+
+func appOrderPulsa24JamNestedValue(raw string, keys ...string) (any, bool) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" || !strings.HasPrefix(raw, "{") {
+		return nil, false
+	}
+	var payload map[string]any
+	if err := json.Unmarshal([]byte(raw), &payload); err != nil {
+		return nil, false
+	}
+	matches := func(candidate string) bool {
+		for _, key := range keys {
+			if strings.EqualFold(strings.TrimSpace(candidate), strings.TrimSpace(key)) {
+				return true
+			}
+		}
+		return false
+	}
+	for k, v := range payload {
+		if matches(k) {
+			return v, true
+		}
+	}
+	for _, nestedKey := range []string{"transaksi_member", "data", "result"} {
+		nested, ok := payload[nestedKey].(map[string]any)
+		if !ok {
+			continue
+		}
+		for k, v := range nested {
+			if matches(k) {
+				return v, true
+			}
+		}
+	}
+	return nil, false
 }

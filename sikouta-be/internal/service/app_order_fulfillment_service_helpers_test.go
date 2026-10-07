@@ -98,6 +98,16 @@ func TestAppOrderPulsa24JamStatusPayFinalStatus(t *testing.T) {
 	}
 }
 
+func TestAppOrderPulsa24JamNestedValues(t *testing.T) {
+	body := `{"ok":true,"transaksi_member":{"biaya_perkiraan":101200,"status":2,"sn":"SN123"}}`
+	if got := appOrderPulsa24JamNestedInt(body, "biaya_perkiraan"); got != 101200 {
+		t.Fatalf("nested price = %d, want 101200", got)
+	}
+	if got := appOrderPulsa24JamNestedText(body, "sn"); got != "SN123" {
+		t.Fatalf("nested sn = %q, want SN123", got)
+	}
+}
+
 func TestResolvePulsa24JamAppRequest(t *testing.T) {
 	tests := []struct {
 		name        string

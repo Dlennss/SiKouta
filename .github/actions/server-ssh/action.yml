@@ -1,0 +1,49 @@
+name: Connect to SiKouta production
+description: Configure pinned SSH host identity and the dedicated deployment key.
+inputs:
+  host:
+    required: true
+  user:
+    required: true
+  port:
+    required: true
+  private-key:
+    required: true
+  known-hosts:
+    required: true
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        DEPLOY_HOST: ${{ inputs.host }}
+        DEPLOY_USER: ${{ inputs.user }}
+        DEPLOY_PORT: ${{ inputs.port }}
+        DEPLOY_KEY: ${{ inputs.private-key }}
+        DEPLOY_HOST_KEYS: ${{ inputs.known-hosts }}
+      run: |
+        set -euo pipefail
+        test "$DEPLOY_HOST" = "103.31.39.97"
+        test "$DEPLOY_USER" = "root"
+        test "$DEPLOY_PORT" = "22"
+        test -n "$DEPLOY_KEY"
+        test -n "$DEPLOY_HOST_KEYS"
+        install -d -m 700 ~/.ssh
+        umask 077
+        printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/sikouta_deploy
+        printf '%s\n' "$DEPLOY_HOST_KEYS" > ~/.ssh/sikouta_known_hosts
+        cat >> ~/.ssh/config <<EOF
+        Host sikouta-production
+          HostName $DEPLOY_HOST
+          User $DEPLOY_USER
+          Port $DEPLOY_PORT
+          IdentityFile ~/.ssh/sikouta_deploy
+          IdentitiesOnly yes
+          BatchMode yes
+          StrictHostKeyChecking yes
+          UserKnownHostsFile ~/.ssh/sikouta_known_hosts
+          ConnectTimeout 15
+          ServerAliveInterval 15
+          ServerAliveCountMax 4
+        EOF
+        ssh sikouta-production true

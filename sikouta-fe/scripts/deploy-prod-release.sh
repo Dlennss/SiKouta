@@ -84,6 +84,16 @@ ensure_deploy_owner "$BUILD_DIR"
 cd "$BUILD_DIR"
 run_as_deploy_user npm ci
 run_as_deploy_user npm run build
+
+# Next.js standalone output does not include public assets or static chunks.
+if [[ -f "$BUILD_DIR/.next/standalone/server.js" ]]; then
+  mkdir -p "$BUILD_DIR/.next/standalone/.next/static"
+  cp -a "$BUILD_DIR/.next/static/." "$BUILD_DIR/.next/standalone/.next/static/"
+  if [[ -d "$BUILD_DIR/public" ]]; then
+    mkdir -p "$BUILD_DIR/.next/standalone/public"
+    cp -a "$BUILD_DIR/public/." "$BUILD_DIR/.next/standalone/public/"
+  fi
+fi
 ensure_deploy_owner "$BUILD_DIR"
 
 ln -sfn "$BUILD_DIR" "$TMP_LINK"

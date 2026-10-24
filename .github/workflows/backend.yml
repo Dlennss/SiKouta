@@ -2,323 +2,54 @@ name: Deploy Backend Production
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - "sikouta-be/**"
-      - ".github/workflows/backend.yml"
+    branches: [main]
+    paths: ["sikouta-be/**", ".github/workflows/backend.yml", ".github/actions/server-ssh/**", ".github/scripts/**"]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
-  group: production-backend-deploy
+  group: production-sikouta-deploy
   cancel-in-progress: false
 
 jobs:
   deploy-backend:
-    name: Deploy backend and restart production services
     runs-on: ubuntu-latest
-    env:
-      SERVER_HOST: ${{ secrets.SERVER_HOST || secrets.HOST }}
-      SERVER_USER: ${{ secrets.SERVER_USER || secrets.USERNAME }}
-      SERVER_PASSWORD: ${{ secrets.SERVER_PASSWORD || secrets.PASSWORD }}
-      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-      DEPLOY_AUTH_METHOD: ${{ secrets.DEPLOY_AUTH_METHOD || 'password' }}
-      SSH_PORT: ${{ secrets.SSH_PORT || secrets.SERVER_PORT || '22' }}
-      BACKEND_SOURCE_DIR: ${{ secrets.BACKEND_SOURCE_DIR || '/var/lib/syslog-ng/sikouta/SiKouta/sikouta-be' }}
-      BACKEND_RELEASE_DIR: ${{ secrets.BACKEND_RELEASE_DIR || '/var/lib/syslog-ng/sikouta/releases/sikouta-be/current' }}
-      FRONTEND_RELEASE_DIR: ${{ secrets.FRONTEND_RELEASE_DIR || '/var/lib/syslog-ng/sikouta/releases/sikouta-fe/current' }}
-      BACKEND_SERVICE_NAME: ${{ secrets.BACKEND_SERVICE_NAME || 'sikouta-be.service' }}
-      FRONTEND_SERVICE_NAME: ${{ secrets.FRONTEND_SERVICE_NAME || 'sikouta-fe.service' }}
-
+    timeout-minutes: 25
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Verify required secrets
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -n "$SERVER_HOST" || (echo "SERVER_HOST secret is required" && exit 1)
-          test -n "$SERVER_USER" || (echo "SERVER_USER secret is required" && exit 1)
-          test -n "$SERVER_PASSWORD" || (echo "SERVER_PASSWORD secret is required" && exit 1)
-
-      - name: Install deployment tools
-        shell: bash
-        run: |
-          set -euo pipefail
-          sudo mkdir -p /tmp/disabled-apt-sources
-          for source_file in $(sudo grep -rl "dl.google.com/linux/chrome" /etc/apt/sources.list.d 2>/dev/null || true); do
-            sudo mv "$source_file" "/tmp/disabled-apt-sources/$(basename "$source_file").disabled"
-          done
-          sudo sed -i '/dl.google.com\/linux\/chrome/s/^[[:space:]]*deb /# deb /' /etc/apt/sources.list 2>/dev/null || true
-          sudo apt-get clean
-          sudo rm -rf /var/lib/apt/lists/*
-          sudo apt-get -o Acquire::Retries=3 update
-          sudo apt-get install -y sshpass rsync
-
-      - name: Prepare SSH connection
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p ~/.ssh
-          ssh-keyscan -p "$SSH_PORT" "$SERVER_HOST" >> ~/.ssh/known_hosts
-          if [[ "$DEPLOY_AUTH_METHOD" == "key" && -n "$SSH_PRIVATE_KEY" ]]; then
-            printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/sikouta_deploy_key
-            chmod 600 ~/.ssh/sikouta_deploy_key
-            cat >> ~/.ssh/config <<EOF
-          Host $SERVER_HOST
-            HostName $SERVER_HOST
-            User $SERVER_USER
-            Port $SSH_PORT
-            IdentityFile ~/.ssh/sikouta_deploy_key
-            IdentitiesOnly yes
-          EOF
-          else
-            cat >> ~/.ssh/config <<EOF
-          Host $SERVER_HOST
-            HostName $SERVER_HOST
-            User $SERVER_USER
-            Port $SSH_PORT
-            PreferredAuthentications password,keyboard-interactive
-            PubkeyAuthentication no
-          EOF
-          fi
-          chmod 600 ~/.ssh/config
-
-      - name: Verify server authentication
-        shell: bash
-        run: |
-          set -euo pipefail
-          export SSHPASS="$SERVER_PASSWORD"
-          if ! sshpass -e ssh -o ConnectTimeout=15 -o NumberOfPasswordPrompts=1 -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "true"; then
-            echo "::error::SSH login failed. Jika server hanya menerima public key, isi GitHub secret SSH_PRIVATE_KEY dengan private key deploy server. Jika pakai password, cek SERVER_HOST, SERVER_USER, SERVER_PASSWORD, dan SSH_PORT / SERVER_PORT."
-            exit 1
-          fi
-
-      - name: Sync backend source
-        shell: bash
-        run: |
-          set -euo pipefail
-          export SSHPASS="$SERVER_PASSWORD"
-          printf '%s\n' "$SERVER_PASSWORD" | sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "sudo -S -p '' bash -s" <<REMOTE
-          set -euo pipefail
-          install -d /var/lib/syslog-ng/sikouta
-          install -d "$BACKEND_SOURCE_DIR"
-          install -d "$BACKEND_SOURCE_DIR/.cache/go-build"
-          install -d "$BACKEND_SOURCE_DIR/.cache/go-mod"
-          install -d "\$(dirname "$BACKEND_RELEASE_DIR")"
-          install -d /var/lib/syslog-ng/sikouta/logs
-          chown -R "$SERVER_USER" /var/lib/syslog-ng/sikouta
-          REMOTE
-          sshpass -e rsync -az --delete \
-            -e "ssh -p $SSH_PORT" \
-            --exclude '.env' \
-            --exclude '.git' \
-            --exclude 'log' \
-            --exclude 'releases' \
-            --exclude 'sikouta-be' \
-            --exclude 'serbabayar-be' \
-            --exclude 'pulsa-be' \
-            sikouta-be/ "$SERVER_USER@$SERVER_HOST:$BACKEND_SOURCE_DIR/"
-          sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
-            "test -f '$BACKEND_SOURCE_DIR/chytron/client.go' && test -f '$BACKEND_SOURCE_DIR/scripts/deploy-prod-release.sh'"
-
-      - name: Write backend environment
-        shell: bash
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: sikouta-be/go.mod
+          cache-dependency-path: sikouta-be/go.sum
+      - name: Test backend
+        working-directory: sikouta-be
+        run: go test ./internal/router ./internal/service ./internal/provider ./internal/repository ./internal/helper
+      - name: Build backend artifact
+        working-directory: sikouta-be
         env:
-          BACKEND_ENV: ${{ secrets.BACKEND_ENV }}
+          CGO_ENABLED: "0"
+          GOOS: linux
+          GOARCH: amd64
         run: |
           set -euo pipefail
-          export SSHPASS="$SERVER_PASSWORD"
-          if [[ -z "$BACKEND_ENV" ]]; then
-            sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "BACKEND_SOURCE_DIR='$BACKEND_SOURCE_DIR' bash -s" <<'REMOTE'
-          set -euo pipefail
-          if [ -f "$BACKEND_SOURCE_DIR/.env" ]; then
-            echo "BACKEND_ENV is empty; keeping the existing server environment."
-            exit 0
-          fi
-          if [ ! -f "$BACKEND_SOURCE_DIR/.env.example" ]; then
-            echo "BACKEND_ENV is empty and .env.example was not found." >&2
-            exit 1
-          fi
-          cp "$BACKEND_SOURCE_DIR/.env.example" "$BACKEND_SOURCE_DIR/.env"
-          sed -i \
-            -e 's#^JWT_SECRET=.*#JWT_SECRET=sikouta-local-jwt-secret#' \
-            -e 's#^ADMIN_TOKEN=.*#ADMIN_TOKEN=sikouta-admin-token#' \
-            -e 's#^PULSA24JAM_BASE_URL=.*#PULSA24JAM_BASE_URL=http://127.0.0.1#' \
-            -e 's#^PULSA24JAM_API_KEY=.*#PULSA24JAM_API_KEY=disabled#' \
-            -e 's#^PULSA24JAM_PIN=.*#PULSA24JAM_PIN=000000#' \
-            "$BACKEND_SOURCE_DIR/.env"
-          chmod 600 "$BACKEND_SOURCE_DIR/.env"
-          echo "Created backend .env from .env.example for fresh server."
-          REMOTE
-            exit 0
-          fi
-          printf '%s\n' "$BACKEND_ENV" | sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
-            "cat > '$BACKEND_SOURCE_DIR/.env' && chmod 600 '$BACKEND_SOURCE_DIR/.env'"
-
-      - name: Ensure backend database credentials
-        shell: bash
+          mkdir -p release
+          go build -trimpath -buildvcs=false -o release/sikouta-be .
+          tar -C release -czf ../sikouta-backend.tgz .
+      - uses: ./.github/actions/server-ssh
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          user: ${{ secrets.SERVER_USER }}
+          port: ${{ secrets.SERVER_PORT }}
+          private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          known-hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
+      - name: Upload and activate backend
+        env:
+          RELEASE_DIR: ${{ secrets.BACKEND_RELEASE_DIR }}
         run: |
           set -euo pipefail
-          export SSHPASS="$SERVER_PASSWORD"
-          printf '%s\n' "$SERVER_PASSWORD" | sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
-            "sudo -S -p '' env BACKEND_SOURCE_DIR='$BACKEND_SOURCE_DIR' bash -s" <<'REMOTE'
-          set -euo pipefail
-          ENV_FILE="$BACKEND_SOURCE_DIR/.env"
-          if [ ! -f "$ENV_FILE" ]; then
-            echo "Backend .env tidak ditemukan, database credential tidak bisa disiapkan." >&2
-            exit 1
-          fi
-          if ! command -v python3 >/dev/null 2>&1; then
-            apt-get update
-            apt-get install -y python3
-          fi
-          if ! command -v psql >/dev/null 2>&1 || ! id postgres >/dev/null 2>&1; then
-            apt-get update
-            apt-get install -y postgresql postgresql-client
-          fi
-          systemctl enable --now postgresql >/dev/null 2>&1 || true
-          DB_INFO="$(python3 - "$ENV_FILE" <<'PY'
-          import sys
-          from urllib.parse import unquote, urlparse
-
-          env_file = sys.argv[1]
-          database_url = ""
-          with open(env_file, "r", encoding="utf-8") as fh:
-              for line in fh:
-                  line = line.strip()
-                  if line.startswith("DATABASE_URL="):
-                      database_url = line.split("=", 1)[1].strip().strip('"').strip("'")
-                      break
-          if not database_url:
-              raise SystemExit("DATABASE_URL is empty")
-
-          parsed = urlparse(database_url)
-          host = parsed.hostname or ""
-          if host not in {"127.0.0.1", "localhost", "db"}:
-              raise SystemExit(0)
-
-          values = {
-              "DB_USER": unquote(parsed.username or ""),
-              "DB_PASSWORD": unquote(parsed.password or ""),
-              "DB_NAME": unquote((parsed.path or "").lstrip("/")),
-          }
-          if not all(values.values()):
-              raise SystemExit("DATABASE_URL harus berisi user, password, dan nama database")
-
-          for key, value in values.items():
-              escaped = value.replace("'", "'\"'\"'")
-              print(f"{key}='{escaped}'")
-          PY
-          )"
-          if [ -z "$DB_INFO" ]; then
-            echo "DATABASE_URL memakai database eksternal; sinkronisasi PostgreSQL lokal dilewati."
-            exit 0
-          fi
-          eval "$DB_INFO"
-          export DB_USER DB_PASSWORD DB_NAME
-          python3 - <<'PY' | sudo -u postgres psql -v ON_ERROR_STOP=1
-          import os
-
-          def sql_literal(value):
-              return "'" + value.replace("'", "''") + "'"
-
-          def sql_ident(value):
-              return '"' + value.replace('"', '""') + '"'
-
-          db_user = os.environ["DB_USER"]
-          db_password = os.environ["DB_PASSWORD"]
-          db_name = os.environ["DB_NAME"]
-
-          print("DO $$")
-          print("BEGIN")
-          print(f"  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = {sql_literal(db_user)}) THEN")
-          print(f"    EXECUTE 'CREATE ROLE ' || quote_ident({sql_literal(db_user)}) || ' LOGIN PASSWORD ' || quote_literal({sql_literal(db_password)});")
-          print("  ELSE")
-          print(f"    EXECUTE 'ALTER ROLE ' || quote_ident({sql_literal(db_user)}) || ' WITH LOGIN PASSWORD ' || quote_literal({sql_literal(db_password)});")
-          print("  END IF;")
-          print("END")
-          print("$$;")
-          print("SELECT 'CREATE DATABASE ' || quote_ident({0}) || ' OWNER ' || quote_ident({1}) WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = {0})\\gexec".format(sql_literal(db_name), sql_literal(db_user)))
-          print(f"ALTER DATABASE {sql_ident(db_name)} OWNER TO {sql_ident(db_user)};")
-          PY
-          echo "PostgreSQL credential backend sudah disinkronkan."
-          REMOTE
-
-      - name: Prepare backend build runtime
-        shell: bash
-        run: |
-          set -euo pipefail
-          export SSHPASS="$SERVER_PASSWORD"
-          GO_VERSION=1.24.2
-          printf '%s\n' "$SERVER_PASSWORD" | sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "sudo -S -p '' bash -s" <<'REMOTE'
-          set -euo pipefail
-          export DEBIAN_FRONTEND=noninteractive
-          apt-get update
-          apt-get install -y build-essential ca-certificates libc6-dev pkg-config rsync sed mawk
-          REMOTE
-
-          REMOTE_ARCH="$(sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "dpkg --print-architecture")"
-          case "$REMOTE_ARCH" in
-            amd64) GO_ARCH=amd64 ;;
-            arm64) GO_ARCH=arm64 ;;
-            *) echo "Unsupported architecture: $REMOTE_ARCH" >&2; exit 1 ;;
-          esac
-
-          INSTALLED_GO_VERSION="$(sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "PATH='/usr/local/go/bin:/usr/local/bin:\$PATH'; if command -v go >/dev/null 2>&1; then set -- \$(go version); printf '%s' \"\${3#go}\"; fi")"
-          if [ "$INSTALLED_GO_VERSION" != "$GO_VERSION" ]; then
-            curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${GO_ARCH}.tar.gz" -o /tmp/sikouta-go.tgz
-            sshpass -e scp -P "$SSH_PORT" /tmp/sikouta-go.tgz "$SERVER_USER@$SERVER_HOST:/tmp/sikouta-go.tgz"
-            printf '%s\n' "$SERVER_PASSWORD" | sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "sudo -S -p '' bash -s" <<'REMOTE'
-          set -euo pipefail
-          rm -rf /usr/local/go
-          tar -C /usr/local -xzf /tmp/sikouta-go.tgz
-          rm -f /tmp/sikouta-go.tgz
-          ln -sfn /usr/local/go/bin/go /usr/local/bin/go
-          ln -sfn /usr/local/go/bin/gofmt /usr/local/bin/gofmt
-          REMOTE
-          fi
-
-          sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" "PATH='/usr/local/go/bin:/usr/local/bin:\$PATH' go version"
-
-      - name: Build and publish backend release
-        shell: bash
-        run: |
-          set -euo pipefail
-          export SSHPASS="$SERVER_PASSWORD"
-          sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
-            "cd '$BACKEND_SOURCE_DIR' && mkdir -p '$BACKEND_SOURCE_DIR/.cache/go-build' '$BACKEND_SOURCE_DIR/.cache/go-mod' && PATH='/usr/local/go/bin:/usr/local/bin:$PATH' HOME='$BACKEND_SOURCE_DIR' GOCACHE='$BACKEND_SOURCE_DIR/.cache/go-build' GOMODCACHE='$BACKEND_SOURCE_DIR/.cache/go-mod' SOURCE_DIR='$BACKEND_SOURCE_DIR' RELEASE_ROOT=\"\$(dirname '$BACKEND_RELEASE_DIR')\" SHARED_LOG_DIR=\"\$(dirname \"\$(dirname '$BACKEND_RELEASE_DIR')\")/logs\" SKIP_SERVICE_RESTART=true bash scripts/deploy-prod-release.sh"
-
-      - name: Restart sikouta services
-        shell: bash
-        run: |
-          set -euo pipefail
-          export SSHPASS="$SERVER_PASSWORD"
-          printf '%s\n' "$SERVER_PASSWORD" | sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
-            "sudo -S -p '' bash -c '
-              install -d /etc/systemd/system/$BACKEND_SERVICE_NAME.d /etc/systemd/system/$FRONTEND_SERVICE_NAME.d
-              printf \"%s\\n\" \"[Service]\" \"WorkingDirectory=$BACKEND_RELEASE_DIR\" \"Environment=PORT=8091\" \"ExecStart=\" \"ExecStart=$BACKEND_RELEASE_DIR/sikouta-be\" > /etc/systemd/system/$BACKEND_SERVICE_NAME.d/release.conf
-              printf \"%s\\n\" \"[Service]\" \"WorkingDirectory=$FRONTEND_RELEASE_DIR\" \"Environment=PORT=3011\" \"Environment=HOSTNAME=127.0.0.1\" \"ExecStart=\" \"ExecStart=/usr/bin/env node $FRONTEND_RELEASE_DIR/server.js\" > /etc/systemd/system/$FRONTEND_SERVICE_NAME.d/release.conf
-              systemctl daemon-reload
-              if ! systemctl restart $BACKEND_SERVICE_NAME $FRONTEND_SERVICE_NAME || ! systemctl is-active --quiet $BACKEND_SERVICE_NAME $FRONTEND_SERVICE_NAME; then
-                journalctl -u $FRONTEND_SERVICE_NAME -n 120 --no-pager || true
-                systemctl --no-pager --full status $BACKEND_SERVICE_NAME $FRONTEND_SERVICE_NAME || true
-                exit 1
-              fi
-            '"
-          sshpass -e ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" \
-            "for attempt in \$(seq 1 60); do
-               if curl --fail --silent http://127.0.0.1:8091/health >/dev/null && curl --fail --silent http://127.0.0.1:3011/api/health >/dev/null; then
-                 echo 'sikouta backend dan frontend siap.'
-                 exit 0
-               fi
-               sleep 2
-             done
-             if systemctl is-active --quiet '$BACKEND_SERVICE_NAME' '$FRONTEND_SERVICE_NAME'; then
-               echo 'sikouta backend dan frontend aktif; HTTP health check belum merespons.'
-               exit 0
-             fi
-             echo 'Service belum aktif setelah 120 detik.' >&2
-             systemctl --no-pager --full status '$BACKEND_SERVICE_NAME' '$FRONTEND_SERVICE_NAME' || true
-             exit 1"
+          upload="/tmp/sikouta-backend-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.tgz"
+          digest="$(sha256sum sikouta-backend.tgz | cut -d ' ' -f 1)"
+          scp sikouta-backend.tgz "sikouta-production:$upload"
+          ssh sikouta-production bash -s -- backend "$RELEASE_DIR" "$upload" "$digest" "$GITHUB_SHA" < .github/scripts/activate-release.sh

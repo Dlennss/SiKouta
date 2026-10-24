@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Bell, Eye, Plus, ReceiptText, Send, Star } from "lucide-react";
+import { Bell, ChevronRight, Eye, Plus, ReceiptText, Send, Star } from "lucide-react";
 import { getAppServerSession } from "@/lib/server-auth";
 import { getUserProfile } from "@/lib/api.auth";
 import { getCategories } from "@/lib/api.products";
@@ -114,13 +114,13 @@ function UserQuickActions() {
 
 function SikoutaPromoCard() {
   return (
-    <Link href="/user/kategori" prefetch={false} className="mt-5 grid min-h-[100px] grid-cols-[84px_minmax(0,1fr)_auto] items-center gap-3 rounded-[20px] bg-[#e9f4ff] px-4 py-3.5 shadow-[0_14px_30px_rgba(7,84,150,0.08)] ring-1 ring-white/70">
-      <Image src="/sikouta-assets/03_dashboard/promo_card.png" alt="" width={78} height={78} className="h-[78px] w-[78px] rounded-[16px] object-cover object-left" />
+    <Link href="/user/kategori" prefetch={false} className="mt-5 grid min-h-[100px] grid-cols-[64px_minmax(0,1fr)_16px] items-center gap-3 rounded-[20px] bg-[#e9f4ff] px-3 py-3.5 shadow-[0_14px_30px_rgba(7,84,150,0.08)] ring-1 ring-white/70">
+      <Image src="/sikouta-assets/03_dashboard/payment-illustration-hd.webp" alt="" width={64} height={64} unoptimized className="h-16 w-16 object-contain" />
       <span className="min-w-0">
         <span className="block text-[14px] font-black leading-5 text-[#06184f]">Transaksi makin mudah bersama Sikouta</span>
         <span className="mt-1 block text-[12.5px] font-medium leading-4 text-[#41598c]">Bayar tagihan, beli pulsa, dan banyak lagi dalam satu aplikasi.</span>
       </span>
-      <span className="text-[32px] leading-none text-[#06184f]">›</span>
+      <ChevronRight aria-hidden="true" className="h-4 w-4 text-[#06184f]" strokeWidth={2.5} />
     </Link>
   );
 }
